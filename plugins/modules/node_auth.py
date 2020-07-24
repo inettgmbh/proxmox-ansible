@@ -8,40 +8,31 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: proxmox_cluster_membership
-short_description: Manages the membership of a proxmox node
+module: proxmox_auth
+short_description: Pulls a ticket and saves auth info in to `proxmox_pve_auth`
 version_added: "2.9.9"
 
 description:
-    - "Let a node join a proxmox cluster"
+    - "Authenticates against a proxmox node"
+    - "Caches authentification info"
 
 options:
-    cluster_node:
-        description:
-            - A node of the cluster to join
-            - Cluster will be created if it doesn't exist
+    node_name:
+        descirption:
+            - name of the node to authenticate agains
         required: true
-    cluster_name:
+    node_addr:
         description:
-            - The name of the cluster, in case it have to be created
-            - Only required, if the cluster doesn't already exist
+            - IP address of the node to authenticate against
+        required: true
+    node_user:
+        description:
+            - Username to use
+        required: true
+    node_pass:
+        description:
+            - Password to use
         required: false
-    node:
-        description:
-            - Node to join the cluster
-        required: true
-    cluster_ticket:
-        description:
-            - A valid ticket for the api of cluster_node
-        required: true
-    node_ticket:
-        description:
-            - A valid ticket for the api of node
-        required: true
-    node_root_password:
-        description:
-            - Password for root@pam
-        required: true
     validate_certs:
         description:
             - weather to validate ssl certs or not
@@ -51,22 +42,13 @@ author:
 '''
 
 EXAMPELS = '''
-- name: join a existing cluster
-  proxmox_cluster_membership:
-    cluster_node: resolvable_hostname / ip_address
-    node: resolvable_hostname / ip_address
-    cluster_ticket: TICKET
-    node_ticket: TICKET
-    node_root_password: PASSWORD
-
-- name: create a new cluster if necessary and join
-  proxmox_cluster_membership:
-    cluster_node: IP_ADDRESS
-    cluster_name: CLUSTER_NAME
-    node: IP_ADDRESS
-    cluster_ticket: TICKET
-    node_ticket: TICKET
-    node_root_password: PASSWORD
+- delegate_to: localhost
+  proxmox_auth:
+    node_name: "{{ inventory_hostname }}"
+    node_addr: "{{ ansible_host }}"
+    node_user: "{{ ansible_user }}@pam"
+    node_pass: "{{ ansible_password }}"
+    validate_certs: false
 '''
 
 import json
@@ -132,18 +114,25 @@ def run_module():
     except FileNotFoundError:
         pass
 
-    (auth_resp, auth_info) = fetch_url(module, node_api_url+"/access/ticket", method="POST", data=urlencode([
-        ('username', module.params["node_user"]),
-        ('password', module.params["node_pass"])
-    ]))
+    (auth_resp, auth_info) = fetch_url(module,
+        node_api_url+"/access/ticket",
+        method="POST",
+        data=urlencode([
+            ('username', module.params["node_user"]),
+            ('password', module.params["node_pass"])
+        ])
+    )
     if auth_info["status"] != 200:
         module.fail_json(msg="unable to authenticate")
 
     authinfo = json.loads(auth_resp.read())["data"]
     (ai_ticket_c, _t) = bc.value_encode(authinfo["ticket"])
-    (val_resp, val_info) = fetch_url(module, node_api_url+"/version", headers={
-        'Cookie': 'PVEAuthCookie='+ai_ticket_c
-    })
+    (val_resp, val_info) = fetch_url(module,
+        node_api_url+"/version",
+        headers={
+            'Cookie': 'PVEAuthCookie='+ai_ticket_c
+        }
+    )
     if val_info["status"] == 200:
         result["changed"] = True
         f = open("/tmp/"+module.params["node_name"]+".ticket", "w")

@@ -19,7 +19,10 @@ options:
     cluster_node:
         description:
             - A node of the cluster to join
-            - Cluster will be created if it doesn't exist
+            - Cluster will be created here if it doesn't exist
+            - |
+              If the cluster doesn't already exist, this module must be run on
+              cluster_node at first (cluster_node == node) to create it
         required: true
     cluster_name:
         description:
@@ -30,13 +33,13 @@ options:
         description:
             - Node to join the cluster
         required: true
-    cluster_ticket:
+    cluster_auth:
         description:
-            - A valid ticket for the api of cluster_node
+            - Authentification information for cluster_node
         required: true
-    node_ticket:
+    node_auth:
         description:
-            - A valid ticket for the api of node
+            - Authentification information for node
         required: true
     node_root_password:
         description:
@@ -51,22 +54,19 @@ author:
 '''
 
 EXAMPELS = '''
-- name: join a existing cluster
-  proxmox_cluster_membership:
-    cluster_node: resolvable_hostname / ip_address
-    node: resolvable_hostname / ip_address
-    cluster_ticket: TICKET
-    node_ticket: TICKET
-    node_root_password: PASSWORD
+# If the cluster does not exist, the module MUST be run at first on the node
+# on which the other nodes are supposed to join
 
-- name: create a new cluster if necessary and join
+- name: Create cluster and join nodes
+  delegate_to: localhost
+  throttle: 1
   proxmox_cluster_membership:
-    cluster_node: IP_ADDRESS
-    cluster_name: CLUSTER_NAME
-    node: IP_ADDRESS
-    cluster_ticket: TICKET
-    node_ticket: TICKET
-    node_root_password: PASSWORD
+    cluster_node: "10.1.99.21"
+    cluster_name: "just-testing"
+    cluster_auth: "{{ hostvars['pve-b-1']['proxmox_pve_auth'] }}"
+    node: "{{ ansible_host }}"
+    node_auth: "{{ proxmox_pve_auth }}"
+    node_root_password: "{{ ansible_password }}"
 '''
 
 import json
@@ -154,18 +154,21 @@ def run_module():
             module.fail_json(msg='cannot fetch node cluster_status')
     node_cluster_status = json.loads(ncl_resp.read().decode('utf8'))
 
+    # Check if there is an cluster on `cluster_node`
     cluster_exists = False
     for v in cluster_status["data"]:
         if v["type"] == "cluster":
             cluster_exists = True
             cluster_name = v["name"]
 
+    # Check if `node` is already in an cluster
     node_in_cluster = False
     for v in node_cluster_status["data"]:
         if v["type"] == "cluster":
             node_in_cluster = True
             result["original_message"] = v["name"]
 
+    # If node is in an cluster, check, if it's the one it's supposed to be in
     if node_in_cluster == True:
         if result["original_message"] == cluster_name:
             result["message"] = cluster_name
@@ -175,10 +178,19 @@ def run_module():
 
     result["message"] = cluster_name
     result["changed"] = (result["message"] != result["original_message"])
+
+    # Exit if in check mode
     if module.check_mode:
         module.exit_json(**result)
 
-    if (cluster_exists == False) and (module.params['cluster_node'] == module.params['node']) and (result["changed"] == True):
+    # Create a new cluster `cluster_name` on `cluster_node` if needed
+    # This requires this module to be run on `cluster_node` before the nodes
+    # join
+    if (
+                (cluster_exists == False)
+            and (module.params['cluster_node'] == module.params['node'])
+            and (result["changed"] == True)
+        ):
         cluster_create_data = {
             'clustername': cluster_name,
             'link0': cluster_node
@@ -189,10 +201,10 @@ def run_module():
             headers=cluster_headers
         )
         if clc_info["status"] != 200:
-            module.fail_json(msg="Unable to create new cluster\n"+module.jsonify(clc_info))
-        time.sleep(15)
+            module.fail_json(msg="Unable to create new cluster\n")
 
-        module.exit_json(**result)
+        # Wait some time - to be replaced by a lookup of the cluster status
+        time.sleep(15)
 
     # Join `node` into cluster
     if (
@@ -206,8 +218,10 @@ def run_module():
             headers=cluster_headers
         )
         if clgjd_info["status"] != 200:
-            module.fail_json(msg="Failed to get cluster join info", kwargs={"exception": clgjd_info})
+            module.fail_json(msg="Failed to get cluster join info")
         join_req = json.loads(clgjd_resp.read().decode('utf8'))
+
+        # Set up join data
         join_data = {
             'fingerprint': join_req["data"]["nodelist"][0]["pve_fp"],
             'hostname': cluster_node,
@@ -226,6 +240,8 @@ def run_module():
                 "exception": clj_resp.read().decode('utf8')
             }
             module.fail_json(msg='Error joining cluster', kwargs=clj_kwargs)
+
+        # Wait some time - to be replaced by a lookup of the cluster status
         time.sleep(15)
 
         # Get node cluster status
