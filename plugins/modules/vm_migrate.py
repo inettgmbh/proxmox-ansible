@@ -230,7 +230,7 @@ def run_module():
             "target": k,
             "vms": targets[k],
             "maxworkers": module.params['maxworkers'],
-            "with-local-disks": bool(int(module.params['with_local_disks']))
+            "with-local-disks": int(module.params['with_local_disks'])
         }
         rc_qemu, _out, _err = module.query_api("create",
                                                "/nodes/"+module.params["src_node_name"]+"/migrateall",
