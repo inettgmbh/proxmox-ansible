@@ -154,6 +154,26 @@ class PveApiModule(AnsibleModule):
             ret.append(node["node"])
         return ret
 
+    def get_node_lrm_idle(self, node):
+        rc, _out, _err, obj = self.query_json("get", "/cluster/ha/status/current")
+        if rc != 0:
+            self.fail_json("Unable to get cluster HA status")
+        for e in obj:
+            if e["type"] == "lrm" and e["node"] == node:
+                # Proxmox VE doesn't change status to maintenance mode when
+                # lrm is idle, so we MUST BE FINE WITH STATUE "IDLE"
+                return "idle" in e["status"]
+
+    def get_node_lrm_maintenance(self, node):
+        rc, _out, _err, obj = self.query_json("get", "/cluster/ha/status/current")
+        if rc != 0:
+            self.fail_json("Unable to get cluster HA status")
+        for e in obj:
+            if e["type"] == "lrm" and e["node"] == node:
+                # Proxmox VE doesn't change status to maintenance mode when
+                # lrm is idle, so we MUST BE FINE WITH STATUE "IDLE"
+                return "maintenance mode" in e["status"]
+
     def get_vmids(self, node=None):
         ret = list()
         if node is None:
@@ -203,6 +223,17 @@ class PveApiModule(AnsibleModule):
                     vm['node'] = node
                     vm['type'] = "lxc"
                     yield vm
+
+    def set_node_lrm_maintenance(self, node, enabled):
+        if enabled:
+            action = "enable"
+        else:
+            action = "disable"
+        cmd = ["ha-manager", "crm-command", "node-maintenance", action, node]
+        s_cmd = ' '.join(cmd)
+        rc, out, err = self.run_command(cmd)
+        if rc != 0:
+            self.fail_json("failed to set maintenance mode", rc=rc, out=out, err=err, cmd=cmd, s_cmd=s_cmd)
 
     def vmid_magic(self, vmid=None):
         r_params = dict(

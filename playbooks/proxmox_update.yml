@@ -1,0 +1,95 @@
+---
+- hosts: pvenodes
+  name: Update cluster
+  gather_facts: false
+  serial: 1
+  tasks:
+
+  - name: get facts of nodes
+    inett.pve.node_facts:
+
+  - name: Wait for proxmox nodes
+    inett.pve.node_wait_for_complete_cluster:
+
+  - name: Wait for healthy ceph
+    inett.pve.ceph_wait_for_health:
+
+  - name: Park machines
+    inett.pve.vm_migrate:
+      src_node_name: "{{ inventory_hostname }}"
+    when:
+      - pve_cluster is defined
+      - pve_major_release < 8
+
+  - name: Move machines
+    inett.pve.node_maintenance:
+      enabled: true
+    when:
+      - pve_cluster is defined
+      - pve_major_release >= 8
+
+  - name: Wait until no tasks are running on the cluster
+    inett.pve.cluster_await_running_tasks:
+
+  - block:
+    - name: Set noout flag
+      inett.pve.ceph_flags:
+        noout: true
+      when: has_ceph
+
+    - name: dist-upgrade
+      apt:
+        force_apt_get: yes
+        update_cache: yes
+        upgrade: dist
+
+    - name: Reboot
+      reboot:
+
+    - pause:
+        prompt: "
+        In case something needs to be done before the update is continued:
+        NOW IT'S TIME TO DO IT
+        Press Enter to continue"
+
+    - name: Wait for proxmox nodes
+      inett.pve.node_wait_for_complete_cluster:
+
+    - name: Unset noout flag
+      inett.pve.ceph_flags:
+        noout: false
+      when: has_ceph
+
+    - name: Wait for healthy ceph
+      inett.pve.ceph_wait_for_health:
+      when: pve_ceph_installed
+
+    rescue:
+      - pause:
+          prompt: "
+          Play paused because of an previous error.
+          Make sure node {{ inventory_hostname }} is online, no ceph flags are set and ceph is healthy.
+          Press Enter to continue"
+
+    always:
+      - name: Migrate machines back
+        inett.pve.vm_migrate:
+          src_node_name: "{{ item.key }}"
+          vmids: "{{ item.value }}"
+          target_nodes:
+          - "{{ inventory_hostname }}"
+          validate_certs: false
+        with_dict: "{{ parked_vms }}"
+        when:
+          - pve_cluster is defined
+          - pve_major_release < 8
+
+      - name: Disable Maintenance Mode
+        inett.pve.node_maintenance:
+          enabled: false
+        when:
+          - pve_cluster is defined
+          - pve_major_release >= 8
+
+      - name: Wait until no tasks are running on the cluster
+        inett.pve.cluster_await_running_tasks:

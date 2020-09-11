@@ -71,14 +71,22 @@ EXAMPELS = '''
 
 import json
 import time
+import subprocess
+import platform
 
 from json.decoder import JSONDecodeError
 from urllib.parse import urlencode
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.http_cookies as cookies
+
+
+def host_reachable(host):
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+    command = ['ping', param, '1', host]
+
+    return subprocess.call(command) == 0
 
 
 def run_module():
@@ -105,16 +113,21 @@ def run_module():
     try:
         o_info_f = open("/tmp/"+module.params["node_name"]+".ticket", "r")
         authinfo = json.loads(o_info_f.read())
+        facts = {
+            'proxmox_pve_auth': authinfo
+        }
+        if not host_reachable(module.params['node_addr']):
+            module.exit_json(**result, ansible_facts=facts)
         (ai_ticket_c, _t) = bc.value_encode(authinfo["ticket"])
-        (val_resp, val_info) = fetch_url(module, node_api_url+"/version", headers={
-            'Cookie': 'PVEAuthCookie='+ai_ticket_c
-        })
+        (val_resp, val_info) = fetch_url(module,
+            node_api_url+"/version", timeout=5,
+            headers={
+                'Cookie': 'PVEAuthCookie='+ai_ticket_c
+            }
+        )
         if val_info["status"] == 200:
             version_info = json.loads(val_resp.read().decode('utf8'))
-            facts = {
-                'proxmox_pve_auth': authinfo,
-                'proxmox_pve_version': version_info["data"]["version"]
-            }
+            facts['proxmox_pve_version'] = version_info["data"]["version"]
             module.exit_json(**result, ansible_facts=facts)
     except FileNotFoundError:
         pass
