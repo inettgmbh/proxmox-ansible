@@ -33,6 +33,12 @@ options:
             - If set to false, check_ha is set to true
             - Default true
         required: true
+    cluster_auth:
+        description:
+            - wather or not to migrate vms in HA setup
+            - If set to false, check_ha is set to true
+            - Default true
+        required: true
     maxworkers:
         description:
             - Maximum Number of parallel Workers for the migration process
@@ -129,11 +135,14 @@ def run_module():
 
         def _get_target_nodes(vmid, default):
             if vmid in ha_vm_group_map:
-                if ha_vm_group_map[vmid] in ha_group_node_map:
-                    _ret = ha_group_node_map[ha_vm_group_map[vmid]]
-                    if module.params['src_node_name'] in _ret:
-                        _ret.remove(module.params['src_node_name'])
-                    return _ret
+                if module.params['migrate_ha']:
+                    if ha_vm_group_map[vmid] in ha_group_node_map:
+                        _ret = ha_group_node_map[ha_vm_group_map[vmid]]
+                        if module.params['src_node_name'] in _ret:
+                            _ret.remove(module.params['src_node_name'])
+                        return _ret
+                else:
+                    return []
             return default
     else:
         def _get_target_nodes(_vmid, default):

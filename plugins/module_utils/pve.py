@@ -178,7 +178,7 @@ class PveApiModule(AnsibleModule):
         ret = list()
         if node is None:
             for node in self.get_nodes():
-                ret.update(self.get_vmids(node=node))
+                ret.extend(self.get_vmids(node=node))
             return ret
         else:
             rc, out, err, qemu = self.query_json("get", "/nodes/" + node + "/qemu")
@@ -197,7 +197,7 @@ class PveApiModule(AnsibleModule):
                 ret.append(vm["vmid"])
             for vm in lxc:
                 ret.append(vm["vmid"])
-        return ret
+        return set(ret)
 
     def get_vms(self, node=None):
         if node is None:
