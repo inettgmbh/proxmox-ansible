@@ -1,0 +1,13 @@
+[
+  {
+    "name": "get cluster status",
+    "inett.pve.pve_facts": {}
+  },
+  {
+    "name": "group by cluster",
+    "ansible.builtin.group_by": {
+      "key": "pve_cluster_{{ cluster.name }}"
+    },
+    "when": "cluster.name is defined"
+  }
+]
