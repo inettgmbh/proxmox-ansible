@@ -27,6 +27,8 @@ def run_module():
     )
     if rc == 0:
         ret = dict(
+            ansible_distribution="PVE",
+            ansible_distribution_major_release=obj["release"],
             pve_release=obj["release"],
             pve_version=obj["version"],
             pve_repoid=obj["repoid"],
