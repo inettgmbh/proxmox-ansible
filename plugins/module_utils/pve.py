@@ -58,6 +58,29 @@ class PveApiModule(AnsibleModule):
             ret.append(node["node"])
         return ret
 
+    def get_vmids(self, node=None):
+        ret = list()
+        if node is None:
+            for node in self.get_nodes():
+                ret.update(self.get_vmids(node=node))
+            return ret
+        else:
+            rc, out, err, qemu = self.query_json("get", "/nodes/"+node+"/qemu")
+            if rc != 0:
+                self.fail_json("failed to query qemu vms for node "+node,
+                    rc=rc, stdout=out, stderr=err, obj=qemu,
+                )
+            rc, out, err, lxc = self.query_json("get", "/nodes/"+node+"/lxc")
+            if rc != 0:
+                self.fail_json("failed to query lxc containers for node "+node,
+                    rc=rc, stdout=out, stderr=err, obj=lxc,
+                )
+            for vm in qemu:
+                ret.append(vm["vmid"])
+            for vm in lxc:
+                ret.append(vm["vmid"])
+        return ret
+
     def get_vms(self, node=None):
         ret = dict()
         if node is None:
@@ -85,8 +108,8 @@ class PveApiModule(AnsibleModule):
                 ret[vm['vmid']]['node'] = node
         return ret
 
-    def vm_info(self, f_vmid):
-        vms = self.get_vms()
+    def vm_info(self, f_vmid, node=None):
+        vms = self.get_vms(node)
         for vmid in vms:
             if int(vmid) == int(f_vmid):
                 return vms[vmid]
