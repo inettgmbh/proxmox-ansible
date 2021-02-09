@@ -2,11 +2,9 @@
 
 # Copyright: (c) 2020, inett GmbH <mhill@inett.de>
 # GNU General Public License v3.0+
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import json
-
-from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 DOCUMENTATION = r'''
 ---
@@ -39,67 +37,31 @@ author:
 '''
 
 
-class PveApiModule(AnsibleModule):
-    def __init__(self,
-                 url, argument_spec=dict(), supported_methods=list(),
-                 **kwargs
-                 ):
-        self.url = url
-        argument_spec.update(dict(
-            url=dict(type='str', required=True),
-            access=dict(
-                choices=['pvesh', 'http'],
-                required=False,
-                default='pvesh'),
-            method=dict(
-                type='str',
-                required=False,
-                default='get'
-            ),
-        ))
-        kwargs['supports_check_mode'] = True
-        super(PveApiModule, self).__init__(
-            argument_spec=argument_spec, **kwargs
-        )
-        if self.params['method'].lower() not in supported_methods:
-            self.fail_json("Unsupported access mode")
-
-    def get_cmd(self):
-        return [
-            "pvesh",
-            self.params['method'], self.url,
-            "--output-format", "json"
-        ]
-
-    def query_api(self):
-        if self.params['access'] == "pvesh":
-            return self.run_command(self.get_cmd())
-        else:
-            return 1, "", "Access method not supported yet"
-
-    def query_json(self):
-        rc, out, err = self.query_api()
-        try:
-            obj = json.loads(out)
-        except:
-            obj = None
-        return rc, out, err, obj
-
-
 def run_module():
-    mod = PveApiModule("/version", supported_methods=['get'])
+    mod = PveApiModule(argument_spec=dict(
+        url=dict(type='str', required=True),
+        method=dict(
+            type='str',
+            required=False,
+            default='get',
+        ),
+    ))
 
     if mod.check_mode and mod.params['method'].lower() != "get":
         mod.exit_json(skipped=True)
 
-    rc, out, err, obj = mod.query_json()
+    rc, out, err, obj = mod.query_json(
+        mod.params['method'].lower(),
+        mod.params['url'].lower(),
+        access=mod.params['access'].lower(),
+    )
 
     if rc == 0:
         mod.exit_json(
             changed=(mod.params['method'].lower() != "get"),
             rc=0, stdout=out, stderr=err, json=obj)
     else:
-        mod.fail_json(
+        mod.fail_json("API query failed",
             changed=(mod.params['method'].lower() != "get"),
             rc=rc, stdout=out, stderr=err, json=obj
         )
