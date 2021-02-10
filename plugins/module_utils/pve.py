@@ -9,9 +9,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 class PveApiModule(AnsibleModule):
     def __init__(self,
-                 argument_spec=dict(),
-                 **kwargs
-                 ):
+        argument_spec=dict(), **kwargs
+    ):
         arc_spec = dict(
             access=dict(
                 choices=['pvesh', 'http'],
@@ -24,28 +23,71 @@ class PveApiModule(AnsibleModule):
             argument_spec=arc_spec, **kwargs
         )
 
-    def _get_cmd(self, method, url):
-        return [
-            "pvesh",
-            method, url,
-            "--output-format", "json"
-        ]
+    def _get_cmd(self, method, url, https_proxy=None, params=dict()):
+        ret = list()
+        if https_proxy is not None:
+            ret.append('https_proxy="' + https_proxy + '"')
+        ret += ["pvesh", method, url]
+        for (k, v) in params:
+            if v['type'] == 'str':
+                ret += ['--'+k, str(v)]
+            if v['type'] == 'int':
+                ret += ['--'+k, int(v)]
+            if v['type'] == 'bool':
+                ret += ['--'+k, int(bool(v))]
+            if v['type'] == 'flag':
+                ret += ['--'+k]
+        ret += ["--output-format", "json"]
+        return ret
 
-    def query_api(self, method, url, access=None):
+    def query_api(
+            self, method, url,
+            access=None, https_proxy=None, fail=None, params=dict()
+    ):
         if access is None:
             access = self.params['access'].lower()
+        if (access != "pvesh") and (https_proxy is not None):
+            self.fail_json("https_proxy can only be used with pvesh")
         if access == "pvesh":
-            return self.run_command(self._get_cmd(method, url))
+            c_params = self._get_cmd(method, url, params=params)
+            rc, out, err = self.run_command(c_params)
         else:
-            return 1, "", "Access method "+access+" not supported yet"
+            rc, out, err = 1, "", "Access method "+access+" not supported yet"
+        if (rc != 0) and (fail is not None):
+            self.fail_json(fail, rc=rc, stdout=out, stderr=err)
+        return rc, out, err
 
-    def query_json(self, method, url, access=None):
-        rc, out, err = self.query_api(method, url, access=access)
+    def query_json(
+            self, method, url,
+            access=None, https_proxy=None, fail=None, params=dict()
+    ):
+        rc, out, err = self.query_api(method, url,
+            access=access, https_proxy=https_proxy, fail=None, params=params
+        )
         try:
             obj = json.loads(out)
+            if (rc != 0) and (fail is not None):
+                self.fail_json(fail, rc=rc, stdout=out, stderr=err, obj=obj)
+            return rc, out, err, obj
         except:
-            obj = None
-        return rc, out, err, obj
+            self.fail_json(
+                "Unable to parse JSON",
+                rc=rc, stdout=out, stderr=err
+            )
+
+    def get_local_node(self):
+        rc, out, err, obj = self.query_json("get", "/cluster/status")
+        if rc != 0:
+            self.fail_json("failed to query nodes",
+                rc=rc, stdout=out, obj=obj,
+            )
+        for node in obj:
+            if bool(int(node['local'])):
+                return node['name']
+
+        self.fail_json("Cannot find local node",
+            stdout=out, stderr=err, json=obj,
+        )
 
     def get_nodes(self):
         rc, out, err, obj = self.query_json("get", "/nodes")
