@@ -82,8 +82,8 @@ class PveApiModule(AnsibleModule):
                 rc=rc, stdout=out, obj=obj,
             )
         for node in obj:
-            if bool(int(node['local'])):
-                return node['name']
+            if (node['type'] == 'node') and bool(int(node['local'])):
+                    return node['name']
 
         self.fail_json("Cannot find local node",
             stdout=out, stderr=err, json=obj,
