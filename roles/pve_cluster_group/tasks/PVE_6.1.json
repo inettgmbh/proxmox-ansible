@@ -4,10 +4,24 @@
     "inett.pve.pve_facts": {}
   },
   {
+    "name": "set fact pve_cluster_group",
+    "ansible.builtin.set_fact": {
+      "pve_cluster_group": "pve_cluster_{{ pve_cluster.name }}"
+    }
+  },
+  {
     "name": "group by cluster",
     "ansible.builtin.group_by": {
-      "key": "pve_cluster_{{ cluster.name }}"
+      "key": "{{ pve_cluster_group }}"
     },
-    "when": "cluster.name is defined"
+    "changed_when": false,
+    "when": "pve_cluster.name is defined"
+  },
+  {
+    "name": "set fqdn if not set",
+    "set_fact": {
+      "pve_fqdn": "{{ pve_local_node }}.{{ pve_domain }}"
+    },
+    "when": "(pve_fqdn is not defined) and (pve_domain is defined)"
   }
 ]
