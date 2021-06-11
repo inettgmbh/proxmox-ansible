@@ -83,7 +83,7 @@ def run_module():
         )
 
     # check mode only for now
-    mod.fail_json("This module cannot change anything yet")
+    mod.fail_json(msg="This module cannot change anything yet")
 
 
 def main():
