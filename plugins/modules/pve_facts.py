@@ -36,8 +36,10 @@ def run_module():
         elif e["type"] == "node":
             nodes[e["name"]] = e
 
-    ansible_facts["cluster"] = cluster
-    ansible_facts["nodes"] = nodes
+    ansible_facts["pve_cluster"] = cluster
+    ansible_facts["pve_cluster_name"] = cluster.get('name', None)
+    ansible_facts["pve_local_node"] = mod.get_local_node()
+    ansible_facts["pve_cluster_nodes"] = nodes
 
     mod.exit_json(changed=False, ansible_facts=ansible_facts)
 
