@@ -1,0 +1,40 @@
+---
+- name: set up VMs
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm:
+    vmid: "{{ pve_vmid }}"
+    state: "{{ pve_vm_state | replace('running', 'stopped') }}"
+    memory: "{{ pve_vm_memory }}"
+    name: "{{ inventory_hostname }}"
+    replace: "{{ pve_vm_replace }}"
+    #clone
+    source_vmid: "{{ pve_vm_source_vmid }}"
+    #create
+    agent: "{{ pve_vm_qemu_guest_agent }}"
+    bios: "{{ pve_vm_bios }}"
+    cpu: "{{ pve_vm_cpu }}"
+    net: "{{ pve_vm_net }}"
+    setup_iso: "{{ pve_vm_setup_iso }}"
+    scsi: "{{ pve_vm_scsi }}"
+    efivars_storage: "{{ pve_vm_efivars_storage | default(pve_vm_storage) | default('rbd') }}"
+    storage: "{{ pve_vm_storage | default('rbd')  }}"
+  register: __pve_vm_setup_result
+  retries: 3
+  delay: 10
+  until: __pve_vm_setup_result is not failed
+
+- name: Cloud-Init
+  ansible.builtin.import_role:
+    name: inett.pve.pve_vm_cloudinit
+
+- name: start VMs
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm:
+    vmid: "{{ pve_vmid }}"
+    state: "{{ pve_vm_state }}"
+  when: pve_vm_state == 'running'
+
+- name: group vms by state
+  changed_when: False
+  ansible.builtin.group_by:
+    key: "pve_vms_state_{{pve_vm_state}}"

@@ -21,17 +21,16 @@ def run_module():
         # VM identification
         vmid=dict(type='int', required=False, default=None),
         name=dict(type='str', required=False),
-        pool=dict(type='int', required=False, default=None),
 
         # Clone
-        source_vmid=dict(type='int', required=False, default=None),
+        source_vmid=dict(type='int', required=False, default=0),
 
-        # Hardware
+        # Creation
         agent=dict(
             type='dict',
             options=dict(
-                enable=dict(type='bool', default=True),
-                fstrim_cloned_disk=dict(type='bool', default=False),
+                enabled=dict(type='bool', default=True),
+                fstrim_cloned_disks=dict(type='bool', default=False),
                 type=dict(choices=['virtio', 'isa'], default='virtio'),
             ),
         ),
@@ -42,26 +41,19 @@ def run_module():
         cpu=dict(
             type='dict',
             options=dict(
+                cores=dict(type='int', default=4),
                 cputype=dict(type='str', default='kvm64'),
                 hidden=dict(type='bool', default=False),
-                limit=dict(type='int', default=4),
+                limit=dict(type='int', default=None),
                 vcpus=dict(type='int', default=0),
             ),
         ),
-        efivars_storage=dict(type='str', required=False, default='rbd:1'),
-        hotplug=dict(type='list', default=['network', 'disk', 'usb', 'cpu']),
-        machine=dict(choices=['q35'], required=False, default=None),
+        efivars_storage=dict(type='str', required=False),
+        hotplug=dict(type='list', default=['network', 'disk', 'usb']),
+        memory=dict(type='int', required=False, default=2048),
+        machine=dict(choices=['q35'], required=False, default='q35'),
         net=dict(
-            type='list', elements='dict', required=False,
-            options=dict(
-                id=dict(type='int'),
-                model=dict(choices=['virtio'], default='virtio'),
-                bridge=dict(type='str', required=True),
-                tag=dict(type='int', default=None),
-                trunks=dict(type='list', elements='int', default=list()),
-                mac=dict(type='str', required=False, default=None),
-                firewall=dict(type='bool', default=True),
-            )
+            type='dict', required=False, default={},  # elements='dict'
         ),
         numa=dict(type='bool', default=True),
         ostype=dict(
@@ -79,36 +71,24 @@ def run_module():
             required=False, default='virtio-scsi-pci',
         ),
         setup_iso=dict(
-            type='dict', required=False, default=None,
+            type='dict', required=False,
             options=dict(
                 storage=dict(type='str', default='cephfs'),
-                image_name=dict(type='str', required=True),
+                image_name=dict(type='str', default='none'),
                 media=dict(type='str', default='cdrom'),
             )
         ),
         scsi=dict(
-            type='list', elements='dict',
-            options=dict(
-                id=dict(type='int', default=0),
-                storage=dict(type='str', default='rbd'),
-                size=dict(type='int', default=32),
-                cache=dict(
-                    choices=['writeback'],
-                    default='writeback', required=False
-                ),
-                discard=dict(type='bool', required=False, default=True),
-            ),
-            default=[
-                dict(id=0,
-                     storage='rbd', size=32, cache='writeback', discard=True,
-                     ),
-            ],
+            type='dict',  # elements='dict',
         ),
         vga=dict(
             choices=['std', 'cirrus', 'qxl'],
             required=False, default='qxl'
         ),
+        storage=dict(type='str', required=False),
     )
+
+    changed = False
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
@@ -139,7 +119,7 @@ def run_module():
             )
         rc, out, err = mod.query_api(
             'delete', "/nodes/%s/qemu/%d" % (vm_node, vmid),
-            params=dict(purge=True),
+            # params=dict(purge=True),
         )
         if mod.params['state'] == 'absent':
             mod.exit_json(
@@ -149,7 +129,7 @@ def run_module():
         existing = False
 
     if (not existing) and (mod.params['state'] in ['stopped', 'running']):
-        if 'source_vmid' in mod.params:
+        if ('source_vmid' in mod.params) and (mod.params.get('source_vmid', 0) >= 100):
             source_vmid = mod.params.get('source_vmid')
             source_vm = mod.vm_info(source_vmid)
             source_node = source_vm.get('node')
@@ -165,96 +145,131 @@ def run_module():
                 "/nodes/%s/qemu/%s/clone" % (source_node, source_vmid),
                 params=clone_params, fail='failed to clone VM'
             )
+            changed = True
         else:
-            mod.fail_json(msg="creation not supported yet")
-            return
-
-            mp_agent = mod['params'].get('agent', {})
-            mp_cpu = mod['params'].get('cpu', {})
-            mp_setup_iso = mod['params'].get('setup_iso', {})
+            mp_agent = mod.params.get('agent', {})
+            mp_cpu = mod.params.get('cpu', {})
+            mp_setup_iso = mod.params.get('setup_iso', {})
             name = mod.params.get('name', None)
             pool = mod.params.get('pool', None)
 
             create_params = dict(
                 agent=dict(
-                    enable=bool(mp_agent.get('enable', True)),
-                    fstrim_cloned_disk=bool(mp_agent.get('fstrim_cloned_disk', False)),
+                    enabled=bool(mp_agent.get('enabled', True)),
+                    fstrim_cloned_disks=bool(mp_agent.get('fstrim_cloned_disks', False)),
                     type=str(mp_agent.get('type', 'virtio')),
                 ),
-                bios=str(mod['params'].get('bios', 'ovmf')),
-                boot_order=mod.params.get('boot_order', ['scsi0', 'ide2']),
+                bios=str(mod.params.get('bios', 'ovmf')),
+                boot=dict(order=mod.params.get('boot_order', ['scsi0', 'ide2'])),
+                cores=int(mp_cpu.get('cores', 4)),
                 cpu=dict(
                     cputype=mp_cpu.get('cputype', 'kvm64'),
-                    hidden=mp_cpu.get('cputype', 'kvm64'),
+                    hidden=mp_cpu.get('hidden', False),
                 ),
-                cpulimit=int(mp_cpu.get('limit', 1)),
-                efivars_storage="{%s}:1" % mod['params'].get('efivars_storage', 'rbd'),
-                hotplug=mod.params.get('hotplug', ['network', 'disk', 'usb', 'cpu']),
-                ide2=dict(
-                    file="%s:iso/%s" % (mp_setup_iso.get('storage', 'cephfs'), mp_setup_iso.get('image_name')),
-                    media=mp_setup_iso.get('media', 'cdrom'),
-                ),
-                machine=str(mod['params'].get('machine', 'q35')),
+                hotplug=mod.params.get('hotplug', ['network', 'disk', 'usb']),
+                memory=str(mod.params.get('memory', 2048)),
+                machine=str(mod.params.get('machine', 'q35')),
                 numa=mod.params.get('numa', True),
-                ostype=str(mod['params'].get('ostype', 'l26')),
-                scsihw=str(mod['params'].get('scsihw', 'qxl')),
+                ostype=str(mod.params.get('ostype', 'l26')),
+                scsihw=str(mod.params.get('scsihw', 'qxl')),
                 vcpus=int(mp_cpu.get('vcpus', mp_cpu.get('limit', 1))),
-                vmid=str(mod['params']['vmid']),
-                vga=str(mod['params'].get('vga', 'qxl')),
+                vmid=str(mod.params['vmid']),
+                vga=str(mod.params.get('vga', 'qxl')),
             )
+
+            if mp_setup_iso.get('image_name', 'none') is 'none':
+                create_params.update(ide2={
+                    'file': "none", 'media': mp_setup_iso.get('media', 'cdrom'),
+                }),
+            else:
+                create_params.update(ide2={
+                    'file': "%s:iso/%s" % (mp_setup_iso.get('storage', 'cephfs'), mp_setup_iso.get('image_name')),
+                    'media': mp_setup_iso.get('media', 'cdrom'),
+                }),
 
             if name is not None:
                 create_params['name'] = name
+
+            for k, n in mod.params.get('net', dict()).items():
+                create_params["net%s" % k] = n
+                if n.get('model', None) is None:
+                    create_params["net%s" % k]['model'] = 'virtio'
+                if n.get('tag', None) is not None:
+                    create_params["net%s" % k]['tag'] = int(n.get('tag'))
+                if len(n.get('trunks', [])) is not 0:
+                    create_params["net%s" % k]['trunks'] = n.get('trunks')
+
+                create_params["ipconfig%s" % k] = dict()
+
+                ip4 = n.get('ip', None)
+                if ip4 is not None:
+                    create_params["net%s" % k].pop('ip', None)
+                    create_params["ipconfig%s" % k].update(dict(ip=ip4))
+                gw4 = n.get('gw', None)
+                if gw4 is not None:
+                    create_params["net%s" % k].pop('gw', None)
+                    create_params["ipconfig%s" % k].update(dict(gw=gw4))
+                ip6 = n.get('ip6', None)
+                if ip6 is not None:
+                    create_params["net%s" % k].pop('ip6', None)
+                    create_params["ipconfig%s" % k].update(dict(ip6=ip6))
+                gw6 = n.get('gw6', None)
+                if gw6 is not None:
+                    create_params["net%s" % k].pop('gw6', None)
+                    create_params["ipconfig%s" % k].update(dict(gw6=gw6))
+
+                if len(create_params["ipconfig%s" % k]) is 0:
+                    create_params.pop("ipconfig%s" % k, None)
+
             if pool is not None:
                 create_params['pool'] = pool
 
-            for s in mod['params'].get('scsi', list()):
-                create_params["scsi%s" % s.get('id')] = dict(
-                    file="%s:%d}" % (s.get('storage', 'rbd'), s.get('size', 32)),
+            for k, s in mod.params.get('scsi', dict()).items():
+                create_params["scsi%s" % k] = dict(
+                    file="%s:%d" % (s.get('storage', mod.params.get('storage')), s.get('size', 32)),
                     cache=s.get('cache', 'writeback'),
-                    discard=s.get('discard', True),
+                    discard=('on' if s.get('discard', True) else 'ignore'),
                 )
 
-            for n in mod['params'].get('net', list()):
-                create_params["net%s" % n.get('id')] = dict(
-                    model=n.get('model', 'virtio'),
-                    bridge=n.get('bridge', 'writeback'),
-                    discard=n.get('discard', True),
-                )
-                if n.get('tag', None) is not None:
-                    create_params["net%s" % n.get('id')]['tag'] = int(n.get('tag'))
-                if len(n.get('trunks', [])) is not 0:
-                    create_params["net%s" % n.get('id')]['trunks'] = n.get('trunks')
+            if 'limit' in mp_cpu and mp_cpu.get('limit', None) is not None:
+                create_params['cpulimit'] = int(mp_cpu.get('limit'))
+
+            if create_params['bios'] == 'ovmf' and 'efivars_storage' in mod.params:
+                create_params['efidisk0'] = "%s:0" % mod.params.get('efivars_storage', mod.params.get('storage', 'rbd'))
+                if create_params['efidisk0'].startswith('None'):
+                    create_params['efidisk0'] = "%s:0" % mod.params.get('storage', 'rbd')
+
+            if 'storage' in mod.params and mod.params.get('storage') is not None:
+                create_params['storage'] = mod.params['storage']
 
             rc, out, err = mod.query_api(
                 'create', "/nodes/%s/qemu" % node,
                 params=create_params, fail='failed to create VM'
             )
+            changed = True
 
     vm_info = mod.vm_info(mod.params.get('vmid'))
-    
-    if mod.params['state'] == vm_info['status']:
-        mod.exit_json(changed=False)
-        return
 
     if (mod.params['state'] == 'running') and (vm_info['status'] != 'running'):
         rc, out, err = mod.query_api(
             'create', "/nodes/%s/qemu/%d/status/start" % (node, vmid),
             fail='failed to start VM'
         )
+        changed = True
     if (mod.params['state'] == 'stopped') and (vm_info['status'] != 'stopped'):
         rc, out, err = mod.query_api(
             'create', "/nodes/%s/qemu/%d/status/stop" % (node, vmid),
             fail='failed to stop VM'
         )
+        changed = True
 
     if rc == 0:
-        mod.exit_json(changed=True, stdout=out, stderr=err)
+        mod.exit_json(changed=changed, stdout=out, stderr=err)
         return
 
-    mod.fail_json(
-        msg='uncovered malfunction', existing=existing, vmid=vmid,
-        rc=rc, stdout=out, stderr=err,
+    mod.exit_json(
+        existing=existing, vmid=vmid,
+        rc=(rc if rc is not None else 0), stdout=out, stderr=err,
     )
 
 

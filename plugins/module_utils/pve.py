@@ -24,11 +24,12 @@ class PveApiModule(AnsibleModule):
         super(PveApiModule, self).__init__(
             argument_spec=arc_spec, **kwargs
         )
-        self.af = open('/tmp/ansible.audit.log', 'w')
+        self.af = open('/tmp/ansible.audit.log', 'a')
         self.pp = pprint.PrettyPrinter(stream=self.af)
 
     def __del__(self):
-        self.af.close()
+        if self.af is not None:
+            self.af.close()
 
     @staticmethod
     def _get_cmd(method, url, https_proxy=None, params=dict()):
@@ -45,13 +46,15 @@ class PveApiModule(AnsibleModule):
                 ret += ["--%s" % k, str(int(v))]
             if v is None:
                 ret += ["--%s" % k]
+            if type(v) is list:
+                ret += ["--%s" % k, ','.join(v)]
             if type(v) is dict:
-                ret += ["--%s" % k, PveApiModule._params_dict_to_string(v)]
+                ret += ["--%s" % k, PveApiModule.params_dict_to_string(v)]
         ret += ["--output-format", "json"]
         return ret
 
     @staticmethod
-    def _params_dict_to_string(in_dict):
+    def params_dict_to_string(in_dict):
         ret_a = list()
 
         for (k, v) in in_dict.items():
@@ -68,6 +71,17 @@ class PveApiModule(AnsibleModule):
 
         return ','.join(ret_a)
 
+    @staticmethod
+    def valid_storages():
+        for x in range(4):
+            yield "ide%d" % x
+        for x in range(6):
+            yield "sata%d" % x
+        for x in range(31):
+            yield "scsi%d" % x
+        for x in range(16):
+            yield "virtio%d" % x
+
     def query_api(
             self, method, url,
             access=None, https_proxy=None, fail=None, params=dict()
@@ -77,11 +91,9 @@ class PveApiModule(AnsibleModule):
         if (access != "pvesh") and (https_proxy is not None):
             self.fail_json("https_proxy can only be used with pvesh")
         if access == "pvesh":
-            f = open('/tmp/ansible.audit.log')
             self.pp.pprint(params)
             c_params = self._get_cmd(method, url, params=params)
             self.pp.pprint(c_params)
-            f.close()
             rc, out, err = self.run_command(c_params)
         else:
             rc, out, err = 1, "", "Access method %s not supported yet" % access
@@ -160,33 +172,27 @@ class PveApiModule(AnsibleModule):
         return ret
 
     def get_vms(self, node=None):
-        ret = dict()
         if node is None:
             for node in self.get_nodes():
-                ret.update(self.get_vms(node=node))
-            return ret
+                for vm in self.get_vms(node=node):
+                    yield vm
         else:
-            rc, out, err, qemu = self.query_json("get", "/nodes/%s/qemu" % node)
-            if rc != 0:
-                self.fail_json(
-                    "failed to query qemu vms for node %s" % node,
-                    rc=rc, stdout=out, stderr=err, obj=qemu,
-                )
-            rc, out, err, lxc = self.query_json("get", "/nodes/%s/lxc" % node)
-            if rc != 0:
-                self.fail_json(
-                    "failed to query lxc containers for node %s" % node,
-                    rc=rc, stdout=out, stderr=err, obj=lxc,
-                )
+            _rc, _out, _err, qemu = self.query_json(
+                "get", "/nodes/%s/qemu" % node,
+                fail="failed to query qemu vms for node %s" % node
+            )
+            _rc, _out, _err, lxc = self.query_json(
+                "get", "/nodes/%s/lxc" % node,
+                fail="failed to query lxc containers for node %s" % node
+            )
             for vm in qemu:
-                ret[vm['vmid']] = vm
-                ret[vm['vmid']]['type'] = "qemu"
-                ret[vm['vmid']]['node'] = node
+                vm['node'] = node
+                vm['type'] = "qemu"
+                yield vm
             for vm in lxc:
-                ret[vm['vmid']] = vm
-                ret[vm['vmid']]['type'] = "lxc"
-                ret[vm['vmid']]['node'] = node
-        return ret
+                vm['node'] = node
+                vm['type'] = "lxc"
+                yield vm
 
     def vmid_magic(self, vmid=None):
         r_params = dict(
@@ -202,8 +208,37 @@ class PveApiModule(AnsibleModule):
         return exists, vmid
 
     def vm_info(self, f_vmid, node=None):
-        vms = self.get_vms(node)
-        for vmid in vms:
-            if int(vmid) == f_vmid:
-                return vms[vmid]
+        for vm in self.get_vms(node):
+            if int(vm['vmid']) == int(f_vmid):
+                return vm
         self.fail_json("Unable to locate VM")
+
+    def vm_locate(self, f_vmid):
+        vm = self.vm_info(f_vmid)
+        if vm.get('node', None) is not None:
+            return vm.get('node')
+        self.fail_json(msg="VM %s found but seems to have no node" % f_vmid)
+
+    def vm_config_get(self, f_vmid, node=None, vm=None):
+        if (node is None) or (vm is None):
+            vm = self.vm_info(f_vmid, node=node)
+            # node = vm['node']
+        _rc, _out, _err, vm_config = self.query_json(
+            'get', "/nodes/%s/%s/%s/config" % (vm['node'], vm['type'], vm['vmid']),
+            fail="error fetching config for VM %s" % vm['vmid']
+        )
+        return vm, vm_config
+
+    def vm_config_set(self, f_vmid, node=None, digest=None, config=dict(), vm=None):
+        if (node is None) or (digest is None) or (vm is None):
+            vm, vm_config = self.vm_config_get(f_vmid, node)
+            digest = vm_config.get('digest', None)
+            node = vm['node']
+        if digest is not None:
+            config.update(dict(digest=digest))
+        self.query_api(
+            'create', "/nodes/%s/%s/%s/config" % (vm['node'], vm['type'], vm['vmid']),
+            params=config,
+            fail="error updating config for VM %s" % vm['vmid']
+        )
+        return self.vm_config_get(f_vmid, node=node, vm=vm)
