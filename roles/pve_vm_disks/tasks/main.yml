@@ -1,0 +1,27 @@
+---
+- name: gathering vm configuration
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_config_info:
+    vmid: "{{ pve_vmid }}"
+
+- name: resize disks
+  vars:
+    c_key: "scsi{{ item.key }}"
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_disk_resize:
+    vmid: "{{ pve_vmid }}"
+    disk: "{{ c_key }}"
+    size: "{{ item.value['size'] }}"
+  when: c_key in pve_vm_config
+  with_dict: "{{ pve_vm_scsi }}"
+
+- name: create disks
+  vars:
+    c_key: "scsi{{ item.key }}"
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_disks:
+    vmid: "{{ pve_vmid }}"
+    scsi: "{ {{item.key}}: {{item.value}} }"
+  when: c_key not in pve_vm_config
+  with_dict: "{{ pve_vm_scsi }}"
+

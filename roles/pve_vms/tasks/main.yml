@@ -47,6 +47,10 @@
       searchdomain: "{{ pve_vm_searchdomain }}"
   when: (pve_vm_nameserver is defined) and (pve_vm_searchdomain is defined)
 
+- name: Disks
+  import_role:
+    name: inett.pve.pve_vm_disks
+
 - name: Cloud-Init
   ansible.builtin.import_role:
     name: inett.pve.pve_vm_cloudinit
