@@ -114,19 +114,23 @@ def run_module():
         vm_node = vm_info.get('node')
         if vm_info['status'] != 'stopped':
             _rc, _out, _err = mod.query_api(
-                'create', "/nodes/%s/qemu/%d/status/stop" % (node, vmid),
+                'create', "/nodes/%s/qemu/%d/status/stop" % (vm_node, mod.params.get('vmid')),
                 fail='failed to stop VM'
             )
         rc, out, err = mod.query_api(
-            'delete', "/nodes/%s/qemu/%d" % (vm_node, vmid),
-            # params=dict(purge=True),
+            'delete', "/nodes/%s/qemu/%d" % (vm_node, mod.params.get('vmid')),
+            params=dict(purge=True),
         )
         if mod.params['state'] == 'absent':
             mod.exit_json(
                 changed=(rc == 0), failed=(rc != 0), stdout=out, stderr=err
             )
             return
-        existing = False
+        vmid = None
+        if ('vmid' in mod.params) and (mod.params['vmid'] is not None):
+            vmid = mod.params['vmid']
+        existing, vmid = mod.vmid_magic(vmid)
+        # existing = False
 
     if (not existing) and (mod.params['state'] in ['stopped', 'running']):
         if ('source_vmid' in mod.params) and (mod.params.get('source_vmid', 0) >= 100):
