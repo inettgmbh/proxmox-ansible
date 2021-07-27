@@ -9,3 +9,4 @@
   roles:
     - inett.pve.pve_vm_prepare_facts
     - inett.pve.pve_vms
+    - inett.pve.pve_vms_finish
