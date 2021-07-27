@@ -4,6 +4,7 @@
   when:
     - pve_vm_wait is defined
     - pve_vm_wait == "connect"
+    - pve_vm_state == "running"
 - name: wait for timeout
   ansible.builtin.wait_for:
     timeout: "{{ pve_vm_wait | int | default(300) }}"
@@ -12,10 +13,13 @@
     - pve_vm_wait is defined
     - pve_vm_wait != "connect"
     - pve_vm_wait | int | default(300) > 0
+    - pve_vm_state == "running"
 
 - name: remove installation media
   delegate_to: "{{ pve_target_node }}"
   inett.pve.pve_vm_cdrom:
     vmid: "{{ pve_vmid }}"
     file: none
-  when: pve_vm_remove_install_media
+  when:
+    - pve_vm_remove_install_media
+    - pve_vm_state == "running"
