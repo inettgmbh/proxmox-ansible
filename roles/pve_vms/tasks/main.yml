@@ -23,6 +23,30 @@
   delay: 10
   until: __pve_vm_setup_result is not failed
 
+- name: Network
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_network:
+    vmid: "{{ pve_vmid }}"
+    net: "{{ pve_vm_net }}"
+  when: (pve_vm_source_vmid >= 100) and  (pve_vm_state != 'absent')
+
+- name: Configure nameserver
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_config:
+    vmid: "{{ pve_vmid }}"
+    update:
+      nameserver: "{{ pve_vm_nameserver }}"
+  when: (pve_vm_nameserver is defined) and (pve_vm_searchdomain is not defined)
+
+- name: Configure nameserver and search domain
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_config:
+    vmid: "{{ pve_vmid }}"
+    update:
+      nameserver: "{{ pve_vm_nameserver }}"
+      searchdomain: "{{ pve_vm_searchdomain }}"
+  when: (pve_vm_nameserver is defined) and (pve_vm_searchdomain is defined)
+
 - name: Cloud-Init
   ansible.builtin.import_role:
     name: inett.pve.pve_vm_cloudinit

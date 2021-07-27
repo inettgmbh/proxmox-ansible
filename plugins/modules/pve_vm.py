@@ -206,6 +206,10 @@ def run_module():
                 create_params["ipconfig%s" % k] = dict()
 
                 ip4 = n.get('ip', None)
+                net4 = n.get('s_net', None)
+                ip4 = ip4 if net4 is None else "%s/%s" % (ip4, net4)
+                if net4 is not None:
+                    create_params["net%s" % k].pop('s_net', None)
                 if ip4 is not None:
                     create_params["net%s" % k].pop('ip', None)
                     create_params["ipconfig%s" % k].update(dict(ip=ip4))
@@ -214,6 +218,10 @@ def run_module():
                     create_params["net%s" % k].pop('gw', None)
                     create_params["ipconfig%s" % k].update(dict(gw=gw4))
                 ip6 = n.get('ip6', None)
+                net6 = n.get('s_net6', None)
+                ip6 = ip6 if net6 is None else "%s/%s" % (ip6, net6)
+                if net6 is not None:
+                    create_params["net%s" % k].pop('s_net6', None)
                 if ip6 is not None:
                     create_params["net%s" % k].pop('ip6', None)
                     create_params["ipconfig%s" % k].update(dict(ip6=ip6))
