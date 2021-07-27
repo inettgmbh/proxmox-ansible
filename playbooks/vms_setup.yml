@@ -3,10 +3,16 @@
   gather_facts: False
   roles:
     - inett.pve.pve_cluster_group
+  tags: always
 
 - hosts: pve_vms
   gather_facts: False
   roles:
     - inett.pve.pve_vm_prepare_facts
+  tags: always
+
+- hosts: pve_vms
+  gather_facts: False
+  roles:
     - inett.pve.pve_vms
     - inett.pve.pve_vms_finish
