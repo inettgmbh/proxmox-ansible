@@ -51,6 +51,23 @@
   import_role:
     name: inett.pve.pve_vm_disks
 
+- name: Update CPU
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_config:
+    vmid: "{{ pve_vmid }}"
+    update:
+      cores: "{{ pve_vm_cores }}"
+  when: pve_vm_cores is defined
+
+- name: Update Memory
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.pve_vm_config:
+    vmid: "{{ pve_vmid }}"
+    update:
+      memory: "{{ pve_vm_memory }}"
+      balloon: "{{ pve_vm_memory }}"
+  when: pve_vm_memory is defined
+
 - name: Cloud-Init
   ansible.builtin.import_role:
     name: inett.pve.pve_vm_cloudinit
