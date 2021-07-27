@@ -35,7 +35,7 @@ def run_module():
         )
         mod.exit_json(ansible_facts=ret)
     else:
-        mod.fail_json("API query failed", rc=rc, stdout=out, stderr=err)
+        mod.fail_json(msg="API query failed", rc=rc, stdout=out, stderr=err)
 
 
 def main():

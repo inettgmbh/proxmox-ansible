@@ -98,7 +98,7 @@ class PveApiModule(AnsibleModule):
         else:
             rc, out, err = 1, "", "Access method %s not supported yet" % access
         if (rc != 0) and (fail is not None):
-            self.fail_json(fail, rc=rc, stdout=out, stderr=err)
+            self.fail_json(msg=fail, rc=rc, stdout=out, stderr=err)
         return rc, out, err
 
     def query_json(
