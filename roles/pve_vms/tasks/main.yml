@@ -71,5 +71,5 @@
     state: "{{ pve_vm_state }}"
   when:
     - pve_vm_state == 'running'
-    - pve_vm_ha is defined
+    - pve_vm_ha is not defined
   tags: start
