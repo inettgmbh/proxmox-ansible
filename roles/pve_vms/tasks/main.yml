@@ -34,7 +34,3 @@
     state: "{{ pve_vm_state }}"
   when: pve_vm_state == 'running'
 
-- name: group vms by state
-  changed_when: False
-  ansible.builtin.group_by:
-    key: "pve_vms_state_{{pve_vm_state}}"

@@ -42,3 +42,9 @@
   loop:
     - "pve_vm_storage"
     - "pve_vm_efivars_storage"
+
+- name: group vms by target state
+  changed_when: False
+  ansible.builtin.group_by:
+    key: "pve_vms_state_{{pve_vm_state}}"
+
