@@ -3,7 +3,7 @@
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import json
-import pprint
+# import pprint
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -24,8 +24,8 @@ class PveApiModule(AnsibleModule):
         super(PveApiModule, self).__init__(
             argument_spec=arc_spec, **kwargs
         )
-        self.af = open('/tmp/ansible.audit.log', 'a')
-        self.pp = pprint.PrettyPrinter(stream=self.af)
+        # self.af = open('/tmp/ansible.audit.log', 'a')
+        # self.pp = pprint.PrettyPrinter(stream=self.af)
 
     def __del__(self):
         if self.af is not None:
@@ -91,9 +91,9 @@ class PveApiModule(AnsibleModule):
         if (access != "pvesh") and (https_proxy is not None):
             self.fail_json("https_proxy can only be used with pvesh")
         if access == "pvesh":
-            self.pp.pprint(params)
+            # self.pp.pprint(params)
             c_params = self._get_cmd(method, url, params=params)
-            self.pp.pprint(c_params)
+            # self.pp.pprint(c_params)
             rc, out, err = self.run_command(c_params)
         else:
             rc, out, err = 1, "", "Access method %s not supported yet" % access
