@@ -16,7 +16,7 @@ def run_module():
         vmid=dict(type=int, required=True),
     )
 
-    mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=False)
+    mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
     node = mod.vm_locate(mod.params['vmid'])
 
