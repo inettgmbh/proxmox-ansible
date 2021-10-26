@@ -22,8 +22,9 @@ def run_module():
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
     ansible_facts = dict()
-    cluster = dict()
+    cluster = None
     nodes = dict()
+    last_node = None
 
     rc, out, err, obj = mod.query_json("get", "/cluster/status")
     if rc != 0:
@@ -35,11 +36,15 @@ def run_module():
                 cluster = e
         elif e["type"] == "node":
             nodes[e["name"]] = e
+        last_node = e
 
-    ansible_facts["pve_cluster"] = cluster
-    ansible_facts["pve_cluster_name"] = cluster.get('name', None)
+    if cluster is not None:
+        ansible_facts["pve_cluster"] = cluster
+        ansible_facts["pve_cluster_name"] = cluster.get('name', None)
+        ansible_facts["pve_cluster_nodes"] = nodes
+    else:
+        ansible_facts["pve_cluster_nodes"] = last_node
     ansible_facts["pve_local_node"] = mod.get_local_node()
-    ansible_facts["pve_cluster_nodes"] = nodes
 
     mod.exit_json(changed=False, ansible_facts=ansible_facts)
 
