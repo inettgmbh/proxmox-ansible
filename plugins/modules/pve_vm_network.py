@@ -39,6 +39,8 @@ def run_module():
             update_params["net%s" % k]['tag'] = int(n.get('tag'))
         if len(n.get('trunks', [])) is not 0:
             update_params["net%s" % k]['trunks'] = n.get('trunks')
+        if 'tag' in update_params["net%s" % k]:
+            update_params["net%s" % k]['tag'] = int(update_params["net%s" % k]['tag'])
 
         update_params["ipconfig%s" % k] = dict()
 
