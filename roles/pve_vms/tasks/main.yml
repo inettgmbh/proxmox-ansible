@@ -28,7 +28,7 @@
   inett.pve.pve_vm_network:
     vmid: "{{ pve_vmid }}"
     net: "{{ pve_vm_net }}"
-  when: (pve_vm_source_vmid >= 100) and  (pve_vm_state != 'absent')
+  when: (pve_vm_source_vmid | int >= 100) and  (pve_vm_state != 'absent')
 
 - name: Configure nameserver
   delegate_to: "{{ pve_target_node }}"
