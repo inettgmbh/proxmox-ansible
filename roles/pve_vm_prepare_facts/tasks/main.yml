@@ -38,7 +38,9 @@
 - name: merge storage variables
   ansible.builtin.set_fact:
     "{{item}}": "{{hostvars[pve_target_node][item]}}"
-  when: item not in hostvars[inventory_hostname]
+  when:
+    - item not in hostvars[inventory_hostname]
+    - item in hostvars[pve_target_node]
   loop:
     - "pve_vm_storage"
     - "pve_vm_efivars_storage"
