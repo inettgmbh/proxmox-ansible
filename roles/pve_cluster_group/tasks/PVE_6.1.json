@@ -6,16 +6,17 @@
   {
     "name": "set fact pve_cluster_group",
     "ansible.builtin.set_fact": {
-      "pve_cluster_group": "pve_cluster_{{ pve_cluster.name }}"
-    }
+      "pve_cluster_group": "pve_cluster_{{ pve_cluster_name }}"
+    },
+    "when": "pve_cluster_name is defined"
   },
   {
     "name": "group by cluster",
     "ansible.builtin.group_by": {
       "key": "{{ pve_cluster_group }}"
     },
-    "changed_when": false,
-    "when": "pve_cluster.name is defined"
+    "when": "pve_cluster_name is defined",
+    "changed_when": false
   },
   {
     "name": "set fqdn if not set",
