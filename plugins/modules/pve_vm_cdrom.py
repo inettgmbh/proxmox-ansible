@@ -29,6 +29,9 @@ def run_module():
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
     vm, vm_config = mod.vm_config_get(mod.params['vmid'])
+
+    if mod.params['device'] not in vm_config:
+        mod.exit_json( changed=False )
     if mod.params['device'] in PveApiModule.valid_storages():
         update_params = dict()
         file = None
