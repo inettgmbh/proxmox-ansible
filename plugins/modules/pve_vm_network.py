@@ -32,7 +32,11 @@ def run_module():
     update_params = dict()
 
     for k, n in mod.params.get('net', dict()).items():
-        update_params["net%s" % k] = n
+        if "net%s" % k not in update_params:
+            update_params["net%s" % k] = dict(
+                  model='virtio'
+            )
+        update_params["net%s" % k].update(n)
         if n.get('model', None) is None:
             update_params["net%s" % k]['model'] = 'virtio'
         if n.get('tag', None) is not None:
