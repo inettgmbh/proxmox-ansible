@@ -118,7 +118,7 @@ def run_module():
                 fail='failed to stop VM'
             )
         rc, out, err = mod.query_api(
-            'delete', "/nodes/%s/qemu/%d" % (vm_node, mod.params.get('vmid')),
+            'delete', "/nodes/%s/qemu/%d" % (vm_node, vmid),
             params=dict(purge=True),
         )
         if mod.params['state'] == 'absent':
