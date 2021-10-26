@@ -1,31 +1,27 @@
 [
-  { "name": "delete existing cloud-init drive",
-    "delegate_to": "{{ pve_target_node }}",
-    "ignore_errors": true,
-    "inett.pve.pve_vm_config": {
-      "vmid": "{{ pve_vmid }}",
-      "update": {
-	"delete": "ide0"
+  { "block": [
+    { "name": "delete existing cloud-init drive",
+      "delegate_to": "{{ pve_target_node }}",
+      "inett.pve.pve_vm_config": {
+        "vmid": "{{ pve_vmid }}",
+	"update": {
+          "delete": [ "ide0" ]
+	}
       }
     },
-    "when": [
-      "pve_vm_cloudinit is defined",
-      "pve_vm_cloudinit",
-      "pve_vm_state != 'absent'"
-    ]
-  },
-  { "name": "set up cloud-init drive",
-    "delegate_to": "{{ pve_target_node }}",
-    "inett.pve.pve_vm_config": {
-      "vmid": "{{ pve_vmid }}",
-      "update": {
-        "ide0": "{{ pve_vm_cloudinit_storage | default(pve_vm_storage) }}:cloudinit"
-      }
-    },
-    "when": [
-      "pve_vm_cloudinit is defined",
-      "pve_vm_cloudinit",
-      "pve_vm_state != 'absent'"
-    ]
-  }
+    { "name": "set up cloud-init drive",
+      "delegate_to": "{{ pve_target_node }}",
+      "inett.pve.pve_vm_config": {
+        "vmid": "{{ pve_vmid }}",
+        "update": {
+          "ide0": "{{ pve_vm_cloudinit_storage | default(pve_vm_storage) }}:cloudinit"
+        }
+      },
+      "when": [
+        "pve_vm_cloudinit is defined",
+        "pve_vm_cloudinit",
+        "pve_vm_state != 'absent'"
+      ]
+    }
+  ] }
 ]
