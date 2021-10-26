@@ -72,6 +72,40 @@
   ansible.builtin.import_role:
     name: inett.pve.pve_vm_cloudinit
 
+- name: Update configuration when VM is a clone
+  block:
+    - delegate_to: "{{ pve_target_node }}"
+      inett.pve.pve_vm_config:
+        vmid: "{{ pve_vmid }}"
+        update:
+          memory: "{{ pve_vm_memory }}"
+          name: "{{ inventory_hostname }}"
+          agent: "{{ pve_vm_qemu_guest_agent }}"
+          bios: "{{ pve_vm_bios }}"
+        # cpu: "{{ pve_vm_cpu }}"
+    - debug:
+        var: pve_vm_net
+    - delegate_to: "{{ pve_target_node }}"
+      inett.pve.pve_vm_network:
+        vmid: "{{ pve_vmid }}"
+        net: "{{ pve_vm_net }}"
+    - delegate_to: "{{ pve_target_node }}"
+      ansible.builtin.import_role:
+        name: inett.pve.pve_vm_cloudinit
+  when:
+    - pve_vm_state != "absent"
+    - pve_vm_source_vmid is defined
+    - pve_vm_source_vmid | int >= 100
+
+
+#- name: Cloud-Init
+#   ansible.builtin.import_role:
+#     name: inett.pve.pve_vm_cloudinit
+
+- ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost
+
 - name: HA-Config
   delegate_to: "{{ pve_target_node }}"
   inett.pve.pve_vm_ha:
