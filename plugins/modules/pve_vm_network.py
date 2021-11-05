@@ -44,7 +44,8 @@ def run_module():
         if len(n.get('trunks', [])) is not 0:
             update_params["net%s" % k]['trunks'] = n.get('trunks')
         if 'tag' in update_params["net%s" % k]:
-            update_params["net%s" % k]['tag'] = int(update_params["net%s" % k]['tag'])
+            update_params["net%s" % k]['tag'] \
+                = int(update_params["net%s" % k]['tag'])
 
         update_params["ipconfig%s" % k] = dict()
 
@@ -76,13 +77,10 @@ def run_module():
         if len(update_params["ipconfig%s" % k]) is 0:
             update_params.pop("ipconfig%s" % k, None)
 
-    # message = dict({
-    #     k: re.sub(r"^file=", "", PveApiModule.params_dict_to_string(v))
-    #     for (k, v) in update_params.items()
-    # })
-    message = update_params;
+    message = update_params
 
-    old_message = dict({k: vm_config.get(k, None) for (k, v) in update_params.items()})
+    old_message \
+        = dict({k: vm_config.get(k, None) for (k, v) in update_params.items()})
     changed = (old_message != message)
 
     if changed:
@@ -99,9 +97,6 @@ def run_module():
         message=message,
         original_message=old_message
     )
-    return
-
-    mod.fail_json(msg="some unhandled malfunction")
 
 
 def main():

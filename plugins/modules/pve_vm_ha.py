@@ -20,8 +20,6 @@ def run_module():
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
-    node = mod.vm_locate(mod.params['vmid'])
-
     ha_params = dict(
         sid=mod.params['vmid'],
         state=mod.params['state'],
