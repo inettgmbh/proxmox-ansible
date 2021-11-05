@@ -12,6 +12,8 @@
   },
   {
     "name": "group by cluster",
+    "delegate_to": "localhost",
+    "become": false,
     "ansible.builtin.group_by": {
       "key": "{{ pve_cluster_group }}"
     },
