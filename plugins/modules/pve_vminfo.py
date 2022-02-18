@@ -21,8 +21,8 @@ def run_module():
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
-    vm_info = mod.vm_info(mod.params["vmid"])
-    mod.exit_json(changed=False, vminfo=vm_info)
+    _vm, vm_config = mod.vm_config_get(mod.params["vmid"])
+    mod.exit_json(changed=False, vm_config=vm_config)
 
 
 def main():
