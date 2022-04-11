@@ -61,7 +61,7 @@ def run_module():
             changed=(mod.params['method'].lower() != "get"),
             rc=0, stdout=out, stderr=err, json=obj)
     else:
-        mod.fail_json("API query failed",
+        mod.fail_json(msg="API query failed",
             changed=(mod.params['method'].lower() != "get"),
             rc=rc, stdout=out, stderr=err, json=obj
         )

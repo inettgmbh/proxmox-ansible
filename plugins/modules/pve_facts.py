@@ -28,7 +28,7 @@ def run_module():
 
     rc, out, err, obj = mod.query_json("get", "/cluster/status")
     if rc != 0:
-        mod.fail_json("API query failed", rc=rc, stdout=out, stderr=err)
+        mod.fail_json(msg="API query failed", rc=rc, stdout=out, stderr=err)
 
     for e in obj:
         if e["type"] == "cluster":

@@ -89,7 +89,7 @@ class PveApiModule(AnsibleModule):
         if access is None:
             access = self.params['access'].lower()
         if (access != "pvesh") and (https_proxy is not None):
-            self.fail_json("https_proxy can only be used with pvesh")
+            self.fail_json(msg="https_proxy can only be used with pvesh")
         if access == "pvesh":
             # self.pp.pprint(params)
             c_params = self._get_cmd(method, url, params=params)
@@ -112,7 +112,7 @@ class PveApiModule(AnsibleModule):
         try:
             obj = json.loads(out)
             if (rc != 0) and (fail is not None):
-                self.fail_json(fail, rc=rc, stdout=out, stderr=err, obj=obj)
+                self.fail_json(msg=fail, rc=rc, stdout=out, stderr=err, obj=obj)
                 return rc, out, err, obj
         except:
             obj = None
@@ -122,7 +122,7 @@ class PveApiModule(AnsibleModule):
         rc, out, err, obj = self.query_json("get", "/cluster/status")
         if rc != 0:
             self.fail_json(
-                "failed to query nodes",
+                msg="failed to query nodes",
                 rc=rc, stdout=out, obj=obj,
             )
         for node in obj:
@@ -130,7 +130,7 @@ class PveApiModule(AnsibleModule):
                 return node['name']
 
         self.fail_json(
-            "Cannot find local node",
+            msg="Cannot find local node",
             stdout=out, stderr=err, json=obj,
         )
 
@@ -138,7 +138,7 @@ class PveApiModule(AnsibleModule):
         rc, out, err, obj = self.query_json("get", "/nodes")
         if rc != 0:
             self.fail_json(
-                "failed to query nodes",
+                msg="failed to query nodes",
                 rc=rc, stdout=out, obj=obj,
             )
         ret = list()
@@ -156,13 +156,13 @@ class PveApiModule(AnsibleModule):
             rc, out, err, qemu = self.query_json("get", "/nodes/" + node + "/qemu")
             if rc != 0:
                 self.fail_json(
-                    "failed to query qemu vms for node %s" % node,
+                    msg="failed to query qemu vms for node %s" % node,
                     rc=rc, stdout=out, stderr=err, obj=qemu,
                 )
             rc, out, err, lxc = self.query_json("get", "/nodes/" + node + "/lxc")
             if rc != 0:
                 self.fail_json(
-                    "failed to query lxc containers for node %s" % node,
+                    msg="failed to query lxc containers for node %s" % node,
                     rc=rc, stdout=out, stderr=err, obj=lxc,
                 )
             for vm in qemu:
@@ -213,7 +213,7 @@ class PveApiModule(AnsibleModule):
         for vm in self.get_vms(node):
             if int(vm['vmid']) == int(f_vmid):
                 return vm
-        self.fail_json("Unable to locate VM")
+        self.fail_json(msg="Unable to locate VM")
 
     def vm_locate(self, f_vmid):
         vm = self.vm_info(f_vmid)
