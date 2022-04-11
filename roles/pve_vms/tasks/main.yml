@@ -25,6 +25,7 @@
   retries: 3
   delay: 10
   until: __pve_vm_setup_result is not failed
+  tags: ["never", "vm_create"]
 
 - block:
   - name: Resource pool
@@ -33,6 +34,7 @@
       vmid: "{{ pve_vmid }}"
       pool: "{{ pve_vm_resource_pool }}"
     when: pve_vm_resource_pool is defined
+    tags: ["never", "vm_create"]
 
   - name: Description
     delegate_to: "{{ pve_target_node }}"
@@ -40,6 +42,7 @@
       vmid: "{{ pve_vmid }}"
       description: "{{ pve_vm_notes }}"
     when: pve_vm_notes is defined
+    tags: ["always"]
 
   - name: Network
     delegate_to: "{{ pve_target_node }}"
@@ -48,6 +51,7 @@
       net: "{{ pve_vm_net }}"
     when:
       - pve_vm_source_vmid | int >= 100
+    tags: ["always"]
 
   - name: Configure nameserver
     delegate_to: "{{ pve_target_node }}"
@@ -85,6 +89,7 @@
       update:
         cores: "{{ pve_vm_cores }}"
     when: pve_vm_cores is defined
+    tags: ["always"]
 
   - name: Update Memory
     delegate_to: "{{ pve_target_node }}"
@@ -94,6 +99,7 @@
         memory: "{{ pve_vm_memory }}"
         balloon: "{{ pve_vm_memory }}"
     when: pve_vm_memory is defined
+    tags: ["always"]
 
   - name: Cloud-Init
     ansible.builtin.import_role:
@@ -106,7 +112,7 @@
       vmid: "{{ pve_vmid }}"
       state: "{{ 'started' if pve_vm_state == 'running' else 'stopped' }}"
       group: "ALL"
-    tags: ha
+    tags: ["never", "vm_create", "ha"]
 
   - name: start VMs
     delegate_to: "{{ pve_target_node }}"
@@ -116,7 +122,7 @@
     when:
       - pve_vm_state == 'running'
       - pve_vm_ha is not defined
-    tags: start
+    tags: ["always", "start"]
 
   when: pve_vm_state != 'absent'
 

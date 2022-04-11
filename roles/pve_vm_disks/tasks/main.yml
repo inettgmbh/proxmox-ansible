@@ -3,6 +3,7 @@
   delegate_to: "{{ pve_target_node }}"
   inett.pve.pve_vm_config_info:
     vmid: "{{ pve_vmid }}"
+  tags: ["always"]
 
 - name: resize disks
   vars:
@@ -16,6 +17,7 @@
     - "c_key in pve_vm_config"
     - "'size' in item.value"
   with_dict: "{{ pve_vm_scsi }}"
+  tags: ["always"]
 
 - name: create disks
   vars:
@@ -27,4 +29,5 @@
     storage: "{{ pve_vm_storage }}"
   when: c_key not in pve_vm_config
   with_dict: "{{ pve_vm_scsi }}"
+  tags: ["always"]
 
