@@ -185,14 +185,16 @@ class PveApiModule(AnsibleModule):
                 "get", "/nodes/%s/lxc" % node,
                 fail="failed to query lxc containers for node %s" % node
             )
-            for vm in qemu:
-                vm['node'] = node
-                vm['type'] = "qemu"
-                yield vm
-            for vm in lxc:
-                vm['node'] = node
-                vm['type'] = "lxc"
-                yield vm
+            if qemu is not None:
+                for vm in qemu:
+                    vm['node'] = node
+                    vm['type'] = "qemu"
+                    yield vm
+            if lxc is not None:
+                for vm in lxc:
+                    vm['node'] = node
+                    vm['type'] = "lxc"
+                    yield vm
 
     def vmid_magic(self, vmid=None):
         r_params = dict(
