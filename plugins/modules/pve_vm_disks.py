@@ -13,6 +13,12 @@ RETURN = r'''
 
 def run_module():
     arg_spec = dict(
+        # TODO: implement state
+        # state=dict(
+        #     choices=['absent', 'running', 'stopped'],
+        #     required=False, default='stopped'
+        # ),
+
         # VM identification
         vmid=dict(type='int', required=False, default=None),
 
@@ -36,7 +42,6 @@ def run_module():
             ),
             cache=s.get('cache', 'writeback'),
             discard=('on' if s.get('discard', True) else 'ignore'),
-            iothread=('on' if s.get('iothread', True) else 'ignore'),
             ssd=('on' if s.get('ssd', True) else 'ignore'),
             mbps_rd=600, mbps_wr=300,
         )
@@ -47,12 +52,15 @@ def run_module():
     changed = (old_message != message)
 
     if changed and not mod.check_mode:
-        mod.vm_config_set(
-            mod.params.get('vmid'),
-            node=vm['node'],
-            config=update_params,
-            vm=vm
-        )
+        for k, v in update_params.items():
+            # TODO: implement changes (size, etc) here
+            if k not in vm_config.items():
+                mod.vm_config_set(
+                    mod.params.get('vmid'),
+                    node=vm['node'],
+                    config={k: v},
+                    vm=vm
+                )
 
     mod.exit_json(
         changed=changed,
