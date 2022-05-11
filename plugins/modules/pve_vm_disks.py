@@ -26,6 +26,8 @@ def run_module():
         scsi=dict(
             type='dict', required=False, default={},  # elements='dict'
         ),
+        # Fallback storage
+        storage=dict(type='str', required=False, default=None),
     )
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)

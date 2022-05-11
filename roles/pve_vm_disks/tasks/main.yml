@@ -24,6 +24,7 @@
   inett.pve.pve_vm_disks:
     vmid: "{{ pve_vmid }}"
     scsi: "{ {{item.key}}: {{item.value}} }"
+    storage: "{{ pve_vm_storage }}"
   when: c_key not in pve_vm_config
   with_dict: "{{ pve_vm_scsi }}"
 
