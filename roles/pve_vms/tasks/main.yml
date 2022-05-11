@@ -24,6 +24,12 @@
   until: __pve_vm_setup_result is not failed
 
 - block:
+    - name: Resource pool
+      delegate_to: "{{ pve_target_node }}"
+      inett.pve.pve_vm_pool:
+        vmid: "{{ pve_vmid }}"
+        pool: "{{ pve_vm_resource_pool }}"
+      when: pve_vm_resource_pool is defined
 
     - name: Network
       delegate_to: "{{ pve_target_node }}"
