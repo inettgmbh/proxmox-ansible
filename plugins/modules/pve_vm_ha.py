@@ -18,18 +18,17 @@ def run_module():
         group=dict(type=str, required=True),
     )
 
-    mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
+    mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=False)
 
-    ha_params = dict(
-        sid=mod.params['vmid'],
-        state=mod.params['state'],
-    )
-    if mod.params.get('group', None) is not None:
-        ha_params['group'] = mod.params['group']
+    node = mod.vm_locate(mod.params['vmid'])
 
     _rc, out, err, vm_config = mod.query_json(
         'create', "/cluster/ha/resources",
-        params=ha_params,
+        params=dict(
+            sid=mod.params['vmid'],
+            state=mod.params['state'],
+            group=mod.params['group'],
+        ),
     )
     mod.exit_json(changed=False, stdout=out, stderr=err)
 
