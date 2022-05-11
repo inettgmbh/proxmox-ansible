@@ -38,6 +38,7 @@ def run_module():
             discard=('on' if s.get('discard', True) else 'ignore'),
             iothread=('on' if s.get('iothread', True) else 'ignore'),
             ssd=('on' if s.get('ssd', True) else 'ignore'),
+            mbps_rd=600, mbps_wr=300,
         )
 
     message = update_params
