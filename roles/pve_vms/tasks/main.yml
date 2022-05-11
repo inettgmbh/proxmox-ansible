@@ -46,7 +46,8 @@
     inett.pve.pve_vm_network:
       vmid: "{{ pve_vmid }}"
       net: "{{ pve_vm_net }}"
-    when: (pve_vm_source_vmid | int >= 100)
+    when:
+      - pve_vm_source_vmid | int >= 100
 
   - name: Configure nameserver
     delegate_to: "{{ pve_target_node }}"
@@ -122,22 +123,17 @@
   - name: Cloud-Init
     ansible.builtin.import_role:
       name: inett.pve.pve_vm_cloudinit
-
-  - ansible.builtin.wait_for:
-      timeout: 5
-    delegate_to: localhost
+    tags: cidata
 
   - name: HA-Config
     delegate_to: "{{ pve_target_node }}"
     inett.pve.pve_vm_ha:
       vmid: "{{ pve_vmid }}"
       state: "{{ 'started' if pve_vm_state == 'running' else 'stopped' }}"
-      group: "{{ pve_vm_ha['group'] | default(None) }}"
-    when: pve_vm_ha is defined
+      group: "ALL"
     tags: ha
 
   - name: start VMs
-    throttle: 1
     delegate_to: "{{ pve_target_node }}"
     inett.pve.pve_vm:
       vmid: "{{ pve_vmid }}"
