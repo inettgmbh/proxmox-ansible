@@ -6,6 +6,9 @@
 
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
+import copy
+import sys
+
 RETURN = r'''
 
 '''
@@ -32,20 +35,13 @@ def run_module():
     update_params = dict()
 
     for k, n in mod.params.get('net', dict()).items():
-        if "net%s" % k not in update_params:
-            update_params["net%s" % k] = dict(
-                  model='virtio'
-            )
-        update_params["net%s" % k].update(n)
+        update_params["net%s" % k] = n
         if n.get('model', None) is None:
             update_params["net%s" % k]['model'] = 'virtio'
         if n.get('tag', None) is not None:
             update_params["net%s" % k]['tag'] = int(n.get('tag'))
-        if len(n.get('trunks', [])) is not 0:
+        if len(n.get('trunks', [])) > 0:
             update_params["net%s" % k]['trunks'] = n.get('trunks')
-        if 'tag' in update_params["net%s" % k]:
-            update_params["net%s" % k]['tag'] \
-                = int(update_params["net%s" % k]['tag'])
 
         update_params["ipconfig%s" % k] = dict()
 
@@ -74,14 +70,49 @@ def run_module():
             update_params["net%s" % k].pop('gw6', None)
             update_params["ipconfig%s" % k].update(dict(gw6=gw6))
 
-        if len(update_params["ipconfig%s" % k]) is 0:
+        if len(update_params["ipconfig%s" % k]) == 0:
             update_params.pop("ipconfig%s" % k, None)
 
-    message = update_params
+    # message = dict({
+    #     k: re.sub(r"^file=", "", PveApiModule.params_dict_to_string(v))
+    #     for (k, v) in update_params.items()
+    # })
+    message = update_params;
 
-    old_message \
-        = dict({k: vm_config.get(k, None) for (k, v) in update_params.items()})
-    changed = (old_message != message)
+    old_message = dict({k: vm_config.get(k, None) for (k, v) in update_params.items()})
+
+    try:
+        msg_cmp_a = copy.deepcopy(old_message)
+        msg_cmp_b = copy.deepcopy(message)
+        for k, v in msg_cmp_a.items():
+            if k.startswith("net") and v is not None:
+                if "macaddr" in v.keys():
+                    v.pop("macaddr")
+                if "virtio" in v.keys():
+                    v.update({"model": "virtio"})
+                    v.pop("virtio")
+                if "firewall" in v.keys():
+                    v.update({"firewall": bool(int(v.get("firewall")))})
+                if "tag" in v.keys():
+                    v.update({"tag": int(v.get("tag"))})
+        for k, v in msg_cmp_b.items():
+            if k.startswith("net") and v is not None:
+                if "virtio" in v.keys():
+                    v.update({"model": "virtio"})
+                    v.pop("virtio")
+                if "macaddr" in v.keys():
+                    v.pop("macaddr")
+    except:
+        mod.fail_json(msg="preparation for comparison failed", error=sys.exec_info()[0],
+                key=k, value=v, msg_cmp_a=msg_cmp_a, msg_cmp_b=msg_cmp_b
+        )
+
+    # remove elements, that didn't change
+    for k, v in msg_cmp_b.items():
+        if v == msg_cmp_a.get(k, None):
+            update_params.pop(k, None)
+
+    changed = (msg_cmp_a != msg_cmp_b)
 
     if changed:
         mod.vm_config_set(
@@ -95,7 +126,9 @@ def run_module():
     mod.exit_json(
         changed=changed,
         message=message,
-        original_message=old_message
+        original_message=old_message,
+        msg_cmp_a=msg_cmp_a,
+        msg_cmp_b=msg_cmp_b,
     )
 
 

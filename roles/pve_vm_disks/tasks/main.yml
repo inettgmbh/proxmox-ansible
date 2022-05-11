@@ -13,8 +13,8 @@
     disk: "{{ c_key }}"
     size: "{{ item.value['size'] }}"
   when:
-    - c_key in pve_vm_config
-    - item.value['size'] is defined
+    - "c_key in pve_vm_config"
+    - "'size' in item.value"
   with_dict: "{{ pve_vm_scsi }}"
 
 - name: create disks

@@ -181,7 +181,7 @@ def run_module():
                 vga=str(mod.params.get('vga', 'qxl')),
             )
 
-            if mp_setup_iso.get('image_name', 'none') is 'none':
+            if mp_setup_iso.get('image_name', 'none') == 'none':
                 create_params.update(ide2={
                     'file': "none", 'media': mp_setup_iso.get('media', 'cdrom'),
                 }),
@@ -200,7 +200,7 @@ def run_module():
                     create_params["net%s" % k]['model'] = 'virtio'
                 if n.get('tag', None) is not None:
                     create_params["net%s" % k]['tag'] = int(n.get('tag'))
-                if len(n.get('trunks', [])) is not 0:
+                if len(n.get('trunks', [])) > 0:
                     create_params["net%s" % k]['trunks'] = n.get('trunks')
 
                 create_params["ipconfig%s" % k] = dict()
@@ -230,7 +230,7 @@ def run_module():
                     create_params["net%s" % k].pop('gw6', None)
                     create_params["ipconfig%s" % k].update(dict(gw6=gw6))
 
-                if len(create_params["ipconfig%s" % k]) is 0:
+                if len(create_params["ipconfig%s" % k]) == 0:
                     create_params.pop("ipconfig%s" % k, None)
 
             if pool is not None:
