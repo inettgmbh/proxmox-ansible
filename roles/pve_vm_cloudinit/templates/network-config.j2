@@ -1,0 +1,23 @@
+version: 2
+ethernets:
+{% for n, c in pve_vm_net.items() %}
+{%   if "ip" in c and "s_net" in c %}
+{%     set r_net_n = ("net%s" | format(n) ) %}
+{%     set net_n = ("enp6s%s" | format(n+18) ) %}
+  {{ net_n }}:
+    set-name: "{{ net_n }}"
+    match:
+      macaddress: "{{ _vm_config[r_net_n]["macaddr"] | lower }}"
+    addresses:
+      - "{{ c.ip }}/{{ c.s_net }}"
+{%     if "gw" in c %}
+    gateway4: "{{ c["gw"] }}"
+{%     endif %}
+{%     if n | int == 0 %}
+    nameservers:
+      search: {{ pve_vm_searchdomain | to_json }}
+      addresses: {{ pve_vm_nameserver | to_json }}
+{%     endif %}
+{%   endif %}
+{% endfor %}
+

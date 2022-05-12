@@ -130,6 +130,9 @@ def run_module():
         msg_cmp_a=msg_cmp_a,
         msg_cmp_b=msg_cmp_b,
     )
+    return
+
+    mod.fail_json(msg="some unhandled malfunction")
 
 
 def main():

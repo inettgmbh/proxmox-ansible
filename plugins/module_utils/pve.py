@@ -3,7 +3,7 @@
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import json
-# import pprint
+import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -72,15 +72,33 @@ class PveApiModule(AnsibleModule):
         return ','.join(ret_a)
 
     @staticmethod
+    def valid_nets():
+        ret = []
+        for x in range(32):
+            ret.append("net%d" % x)
+        return ret
+
+    @staticmethod
+    def valid_nic_models():
+        return [
+            "e1000", "e1000-82540em", "e1000-82544gc", "e1000-82545em",
+            "e1000e", "i82551", "i82557b", "i82559er", "ne2k_isa", "ne2k_pci",
+            "pcnet", "rtl8139", "virtio", "vmxnet3",
+        ]
+
+    @staticmethod
     def valid_storages():
+        ret = []
         for x in range(4):
-            yield "ide%d" % x
+            ret.append("ide%d" % x)
         for x in range(6):
-            yield "sata%d" % x
+            ret.append("sata%d" % x)
         for x in range(31):
-            yield "scsi%d" % x
+            ret.append("scsi%d" % x)
         for x in range(16):
-            yield "virtio%d" % x
+            ret.append("virtio%d" % x)
+        ret.append("efidisk0")
+        return ret
 
     def query_api(
             self, method, url,
@@ -229,6 +247,43 @@ class PveApiModule(AnsibleModule):
             'get', "/nodes/%s/%s/%s/config" % (vm['node'], vm['type'], vm['vmid']),
             fail="error fetching config for VM %s" % vm['vmid']
         )
+        for (k, v) in vm_config.items():
+            if isinstance(v, str):
+                if '=' in v:
+                    n_v = dict()
+                    for l in v.split(','):
+                        l_s = l.split('=')
+                        try:
+                            if len(l_s) == 1 and k == "agent":
+                                n_v.update({"enabled": bool(int(l_s[0]))})
+                            elif len(l_s) == 1 and k in self.valid_storages():
+                                n_v.update({"volume": v})
+                            elif len(l_s) == 2 and k in self.valid_nets():
+                                if l_s[0] == "firewall":
+                                    n_v.update({"firewall": bool(int(l_s[1]))})
+                                elif l_s[0] == "tag":
+                                    n_v.update({"tag": int(l_s[1])})
+                                elif l_s[0] == "trunks":
+                                    n_v.update({
+                                        "trunks": [int(t) for t in l_s[1].split(";")]
+                                    })
+                                elif l_s[0] in self.valid_nic_models():
+                                    n_v.update({"model": l_s[0], "macaddr": l_s[1]})
+                                else:
+                                    n_v.update({l_s[0]: l_s[1]})
+                            elif k == "agent" and l_s[0] in ["fstrim_cloned_disks"]:
+                                n_v.update({l_s[0]: bool(int(l_s[1]))})
+                            else:
+                                n_v.update({l_s[0]: l_s[1]})
+                        except:
+                            self.fail_json(msg="failed to parse config",
+                                    vm_config=vm_config, key=k, value=v,
+                                    lst=l, lst_el_split=l_s, lst_sp_len=len(l_s),
+                                    exception=sys.exc_info(),
+                            )
+                    vm_config[k] = n_v
+                elif ',' in v:
+                    vm_config[k] = v.split(',')
         return vm, vm_config
 
     def vm_config_set(self, f_vmid, node=None, digest=None, config=dict(), vm=None):
