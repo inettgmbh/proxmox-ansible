@@ -9,8 +9,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class PveApiModule(AnsibleModule):
-    af = None
-    pp = None
 
     def __init__(self, argument_spec=dict(), **kwargs):
         arc_spec = dict(
@@ -24,12 +22,6 @@ class PveApiModule(AnsibleModule):
         super(PveApiModule, self).__init__(
             argument_spec=arc_spec, **kwargs
         )
-        # self.af = open('/tmp/ansible.audit.log', 'a')
-        # self.pp = pprint.PrettyPrinter(stream=self.af)
-
-    def __del__(self):
-        if self.af is not None:
-            self.af.close()
 
     @staticmethod
     def _get_cmd(method, url, https_proxy=None, params=dict()):
@@ -109,9 +101,7 @@ class PveApiModule(AnsibleModule):
         if (access != "pvesh") and (https_proxy is not None):
             self.fail_json(msg="https_proxy can only be used with pvesh")
         if access == "pvesh":
-            # self.pp.pprint(params)
             c_params = self._get_cmd(method, url, params=params)
-            # self.pp.pprint(c_params)
             rc, out, err = self.run_command(c_params)
         else:
             rc, out, err = 1, "", "Access method %s not supported yet" % access
