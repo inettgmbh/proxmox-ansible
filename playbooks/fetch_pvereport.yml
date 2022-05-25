@@ -8,7 +8,7 @@
     - name: Fetch pvereport from node
       ansible.builtin.fetch:
         src: /pvereport
-        dest: ../pvereport
+        dest: "../pvereport_{{ inventory_hostname }}"
     - name: Remove pvereport from node
       ansible.builtin.file:
         path: /pvereport
