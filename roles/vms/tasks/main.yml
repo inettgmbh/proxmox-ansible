@@ -4,7 +4,7 @@
   vars:
     t_run: "{{ 'running' if (reconfig_only | default(False)) else 'stopped' }}"
     t_state: "{{ pve_vm_state | replace('running', t_run ) }}"
-  inett.pve.pve_vm:
+  inett.pve.vm:
     vmid: "{{ pve_vmid }}"
     state: "{{ t_state }}"
     memory: "{{ pve_vm_memory }}"
@@ -30,7 +30,7 @@
 - block:
   - name: Resource pool
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_pool:
+    inett.pve.vm_resource_pool:
       vmid: "{{ pve_vmid }}"
       pool: "{{ pve_vm_resource_pool }}"
     when: pve_vm_resource_pool is defined
@@ -38,7 +38,7 @@
 
   - name: Description
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_description:
+    inett.pve.vm_description:
       vmid: "{{ pve_vmid }}"
       description: "{{ pve_vm_notes }}"
     when: pve_vm_notes is defined
@@ -46,7 +46,7 @@
 
   - name: Network
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_network:
+    inett.pve.vm_network:
       vmid: "{{ pve_vmid }}"
       net: "{{ pve_vm_net }}"
     when:
@@ -55,7 +55,7 @@
 
   - name: Configure nameserver
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_config:
+    inett.pve.vm_config:
       vmid: "{{ pve_vmid }}"
       update:
         nameserver: "{{ pve_vm_nameserver }}"
@@ -65,11 +65,11 @@
 
   - name: Disks
     import_role:
-      name: inett.pve.pve_vm_disks
+      name: inett.vm_disks
 
   - name: Configure nameserver and search domain
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_config:
+    inett.pve.vm_config:
       vmid: "{{ pve_vmid }}"
       update:
         nameserver: "{{ pve_vm_nameserver }}"
@@ -80,11 +80,11 @@
 
   - name: Disks
     import_role:
-      name: inett.pve.pve_vm_disks
+      name: inett.vm_disks
 
   - name: Update CPU
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_config:
+    inett.pve.vm_config:
       vmid: "{{ pve_vmid }}"
       update:
         cores: "{{ pve_vm_cores }}"
@@ -93,7 +93,7 @@
 
   - name: Update Memory
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_config:
+    inett.pve.vm_config:
       vmid: "{{ pve_vmid }}"
       update:
         memory: "{{ pve_vm_memory }}"
@@ -103,12 +103,12 @@
 
   - name: Cloud-Init
     ansible.builtin.import_role:
-      name: inett.pve.pve_vm_cloudinit
+      name: inett.vm_cloudinit
     tags: cidata
 
   - name: HA-Config
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm_ha:
+    inett.pve.vm_ha:
       vmid: "{{ pve_vmid }}"
       state: "{{ 'started' if pve_vm_state == 'running' else 'stopped' }}"
       group: "ALL"
@@ -116,7 +116,7 @@
 
   - name: start VMs
     delegate_to: "{{ pve_target_node }}"
-    inett.pve.pve_vm:
+    inett.pve.vm:
       vmid: "{{ pve_vmid }}"
       state: "{{ pve_vm_state }}"
     when:

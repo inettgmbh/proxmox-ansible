@@ -2,7 +2,7 @@
   { "name": "delete existing cloud-init drive",
     "delegate_to": "{{ pve_target_node }}",
     "ignore_errors": true,
-    "inett.pve.pve_vm_config": {
+    "inett.pve.vm_config": {
       "vmid": "{{ pve_vmid }}",
       "update": {
         "delete": "ide0"
@@ -14,7 +14,7 @@
   },
   { "name": "get current vm config",
     "delegate_to": "{{ pve_target_node }}",
-    "inett.pve.pve_vminfo": {
+    "inett.pve.vm_get_config": {
       "vmid": "{{ pve_vmid }}"
     },
     "register": "_vm_info",
@@ -31,7 +31,7 @@
   },
   { "name": "configure custom cloud-init",
     "delegate_to": "{{ pve_target_node }}",
-    "inett.pve.pve_vm_config": {
+    "inett.pve.vm_config": {
       "vmid": "{{ pve_vmid }}",
       "update": {
         "cicustom": {
@@ -43,7 +43,7 @@
   },
   { "name": "set up cloud-init drive",
     "delegate_to": "{{ pve_target_node }}",
-    "inett.pve.pve_vm_config": {
+    "inett.pve.vm_config": {
       "vmid": "{{ pve_vmid }}",
       "update": {
         "ide0": "{{ pve_vm_cloudinit_storage | default(pve_vm_storage) }}:cloudinit"

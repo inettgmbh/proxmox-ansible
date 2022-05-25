@@ -1,10 +1,14 @@
 # proxmox-ansible
 
+## setup
+
+this collection is to be used just like ansible galaxy or cloned into `./collections/ansible_collections/inett/pve`
+The namespace is `inett.pve`
+
 ## usage
 
 VMs are part of the inventory in the form of normal hosts, but contained 
 special groups, configured with variables.
-
 
 ### groups
 
@@ -17,14 +21,14 @@ special groups, configured with variables.
 
 ### roles
 
-* `inett.pve.pve_cluster_group`: gather facts about Proxmox VE nodes and 
+* `inett.pve.cluster_group`: gather facts about Proxmox VE nodes and 
   group them by cluster name
-* `inett.pve.pve_vm_prepare_facts`: assigns VMs to target nodes, set and merge 
+* `inett.pve.vm_prepare_facts`: assigns VMs to target nodes, set and merge 
   some facts
-* `inett.pve.pve_vms`: set up VMs and group them by target state
-* `inett.pve.pve_vm_disks`: resize and create SCSI disks
-* `inett.pve.pve_vm_cloudinit`: ensure state of cloud-init drive
-* `inett.pve.pve_vms_finish`: wait for VMs (timeout if `pve_vm_wait` is an 
+* `inett.pve.vms`: set up VMs and group them by target state
+* `inett.pve.vm_disks`: resize and create SCSI disks
+* `inett.pve.vm_cloudinit`: ensure state of cloud-init drive
+* `inett.pve.vms_finish`: wait for VMs (timeout if `pve_vm_wait` is an 
   integer, connection (Linux) if `pve_vm_wait` is set to "connect") and 
   finish setup
 
@@ -32,8 +36,8 @@ special groups, configured with variables.
 
 #### pve_nodes
 
-`pve_vm_storage` and `pve_efivars_storage` are automatically merged by the 
-role `inett.pve.pve_vm_prepare_facts` from the target node to the VM.
+`vm_storage` and `efivars_storage` are automatically merged by the 
+role `inett.pve.vm_prepare_facts` from the target node to the VM.
 
 #### pve_vms
 

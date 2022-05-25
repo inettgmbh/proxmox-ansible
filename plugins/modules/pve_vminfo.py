@@ -4,25 +4,17 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+from ansible_collections.inett.pve.plugins.module_utils.pve import *
+from vm_get_config import run_module as vm_get_config_module
 
 RETURN = r'''
 
 '''
 
 
+@replaced("Ansible module inett.pve.vm_get_config")
 def run_module():
-    arg_spec = dict(
-        vmid=dict(type=int, required=True),
-        access=dict(
-            choices=['pvesh', 'http'], required=False, default='pvesh'
-        ),
-    )
-
-    mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
-
-    _vm, vm_config = mod.vm_config_get(mod.params["vmid"])
-    mod.exit_json(changed=False, vm_config=vm_config)
+    return vm_get_config_module()
 
 
 def main():

@@ -17,7 +17,7 @@
 
 - name: remove installation media
   delegate_to: "{{ pve_target_node }}"
-  inett.pve.pve_vm_cdrom:
+  inett.pve.vm_cdrom:
     vmid: "{{ pve_vmid }}"
     file: none
   when:
