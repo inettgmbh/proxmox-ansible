@@ -8,16 +8,19 @@ ethernets:
     set-name: "{{ net_n }}"
     match:
       macaddress: "{{ _vm_config[r_net_n]["macaddr"] | lower }}"
+{%     if "dhcp" in c and c["dhcp"] %}
+    dhcp: true
+{%     else %}
     addresses:
       - "{{ c.ip }}/{{ c.s_net }}"
+{%     endif %}
 {%     if "gw" in c %}
     gateway4: "{{ c["gw"] }}"
 {%     endif %}
-{%     if n | int == 0 %}
+{%     if (n | int == 0) and (pve_vm_searchdomain is defined) and (pve_vm_nameserver is defined) %}
     nameservers:
       search: {{ pve_vm_searchdomain | to_json }}
       addresses: {{ pve_vm_nameserver | to_json }}
 {%     endif %}
-{%   endif %}
 {% endfor %}
 

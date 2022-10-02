@@ -1,5 +1,6 @@
 ---
-- ansible.builtin.set_fact:
+- name: set list of pve clusters
+  ansible.builtin.set_fact:
     pve_clusters: >
       {%- set cluster_names = [] -%}
       {%- for host in groups['all'] | default ([]) -%}
@@ -9,27 +10,24 @@
       {%-   endif -%}
       {%- endfor -%}
       {{- cluster_names | unique -}}
-  when: pve_target_node is not defined
-- ansible.builtin.set_fact:
+- name: set target cluster if not defined
+  ansible.builtin.set_fact:
     pve_target_cluster: "{{ pve_clusters[0] }}"
   when:
     - pve_clusters | count == 1
     - pve_target_node is not defined
     - pve_target_cluster is not defined
-- ansible.builtin.set_fact:
-    pve_target_cluster: "{{ _pve_target_cluster }}"
-  when:
-    - _pve_target_cluster is defined
-    - _pve_target_cluster is not skipped
-- ansible.builtin.set_fact:
+- name: set VMs target cluster group
+  ansible.builtin.set_fact:
     pve_target_group: "pve_cluster_{{pve_target_cluster}}"
   when: pve_target_node is not defined
-- vars:
-    pve_target_hosts: "{{groups[pve_target_group]}}"
-    pve_target_hosts_size: "{{groups[pve_target_group] | count}}"
-    _pve_node_n: "{{ ((pve_vmid | int) % (pve_target_hosts_size | int)) }}"
+- name: set target node of cluster
+  vars:
+    _pve_target_hosts: "{{ groups[pve_target_group] }}"
+    _pve_target_hosts_size: "{{ groups[pve_target_group] | count }}"
+    _pve_node_n: "{{ ((pve_vmid | int) % (_pve_target_hosts_size | int)) }}"
   ansible.builtin.set_fact:
-    pve_target_node: "{{ pve_target_hosts[_pve_node_n] }}"
+    pve_target_node: "{{ groups[pve_target_group][(_pve_node_n | int)] }}"
   when: pve_target_node is not defined
 - name: fail when target node cannot be determined
   fail:
