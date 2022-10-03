@@ -1,5 +1,6 @@
 ---
 - name: set list of pve clusters
+  delegate_to: localhost
   ansible.builtin.set_fact:
     pve_clusters: >
       {%- set cluster_names = [] -%}
@@ -11,6 +12,7 @@
       {%- endfor -%}
       {{- cluster_names | unique -}}
 - name: set target cluster if not defined
+  delegate_to: localhost
   ansible.builtin.set_fact:
     pve_target_cluster: "{{ pve_clusters[0] }}"
   when:
@@ -18,10 +20,12 @@
     - pve_target_node is not defined
     - pve_target_cluster is not defined
 - name: set VMs target cluster group
+  delegate_to: localhost
   ansible.builtin.set_fact:
     pve_target_group: "pve_cluster_{{pve_target_cluster}}"
   when: pve_target_node is not defined
 - name: set target node of cluster
+  delegate_to: localhost
   vars:
     _pve_target_hosts: "{{ groups[pve_target_group] }}"
     _pve_target_hosts_size: "{{ groups[pve_target_group] | count }}"
