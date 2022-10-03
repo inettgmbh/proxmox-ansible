@@ -1,0 +1,12 @@
+- name: get version
+  inett.pve.pve_version_facts:
+
+- name: group by cluster
+  block:
+    - name: include version specific task
+      ansible.builtin.include_tasks:
+        file: '{{ ansible_distribution }}_{{ ansible_distribution_major_release }}.yaml'
+  rescue:
+    - name: include fallback task
+      ansible.builtin.include_tasks:
+        file: 'PVE_7.0.yaml'
