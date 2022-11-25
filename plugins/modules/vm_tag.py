@@ -4,8 +4,6 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import yaml
-
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 RETURN = r'''
@@ -18,26 +16,17 @@ def run_module():
         # VM identification
         vmid=dict(type='int'),
 
-        description=dict(type='raw', required=False, default=None),
+        tag=dict(type='list', required=False, default=None, elements='string'),
     )
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=True)
 
     vm, vm_config = mod.vm_config_get(mod.params['vmid'])
 
-    description = mod.params.get('description', None)
-
-    if isinstance(description, dict) and description is not None:
-        for k, v in description.items():
-            if isinstance(v, str):
-                description[k] = v.strip()
-        description = yaml.dump(description,
-                default_flow_style=False,
-        )
-        description = "\n\n".join(description.split("\n"))
+    tag = mod.params.get('tag', None)
 
     update_params = {
-        'description': description
+        'tag': tag
     }
 
     old_message = dict({k: vm_config.get(k, None) for (k, v) in update_params.items()})
@@ -46,9 +35,9 @@ def run_module():
     message.update(update_params)
     changed = (old_message != message)
 
-    if update_params['description'] is None:
-        update_params.pop('description')
-        update_params['delete'] = ['description']
+    if update_params['tag'] is None:
+        update_params.pop('tag')
+        update_params['delete'] = ['tag']
 
     if changed:
         mod.vm_config_set(

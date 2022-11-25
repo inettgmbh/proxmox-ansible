@@ -81,6 +81,7 @@ def run_module():
         scsi=dict(
             type='dict',  # elements='dict',
         ),
+        tag=dict(type='list', required=False, default=[], elements='string'),
         vga=dict(
             choices=['std', 'cirrus', 'qxl'],
             required=False, default='qxl'
@@ -176,6 +177,7 @@ def run_module():
                 numa=mod.params.get('numa', True),
                 ostype=str(mod.params.get('ostype', 'l26')),
                 scsihw=str(mod.params.get('scsihw', 'qxl')),
+                tag=mod.params.get('tag', []),
                 vcpus=int(mp_cpu.get('vcpus', mp_cpu.get('limit', 1))),
                 vmid=str(mod.params['vmid']),
                 vga=str(mod.params.get('vga', 'qxl')),
