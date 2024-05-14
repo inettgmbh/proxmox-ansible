@@ -25,6 +25,8 @@ def run_module():
     cluster = None
     nodes = dict()
     last_node = None
+    has_ceph = False
+    ceph_health = None
 
     rc, out, err, obj = mod.query_json("get", "/cluster/status")
     if rc != 0:
@@ -71,7 +73,7 @@ def run_module():
         ansible_facts["pve_cluster_nodes"] = nodes
     else:
         ansible_facts["pve_cluster_nodes"] = last_node
-    ansible_facts["pve_local_node"] = mod.get_local_node()
+    ansible_facts["pve_local_node"] = node_name
 
     mod.exit_json(changed=False, ansible_facts=ansible_facts)
 

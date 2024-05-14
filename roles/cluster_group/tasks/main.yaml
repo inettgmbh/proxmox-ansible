@@ -1,12 +1,22 @@
 - name: get version
   inett.pve.pve_version_facts:
 
+- name: set fact pve_cluster_group
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    pve_cluster_group: pve_cluster_{{ pve_cluster_name }}
+  when: pve_cluster_name is defined
+
 - name: group by cluster
-  block:
-    - name: include version specific task
-      ansible.builtin.include_tasks:
-        file: '{{ ansible_distribution }}_{{ ansible_distribution_major_release }}.yaml'
-  rescue:
-    - name: include fallback task
-      ansible.builtin.include_tasks:
-        file: 'PVE_7.0.yaml'
+  delegate_to: localhost
+  become: false
+  ansible.builtin.group_by:
+    key: '{{ pve_cluster_group }}'
+  when: pve_cluster_name is defined
+  changed_when: false
+
+- name: set fqdn if not set
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    pve_fqdn: '{{ pve_local_node }}.{{ pve_domain }}'
+  when: (pve_fqdn is not defined) and (pve_domain is defined)

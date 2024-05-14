@@ -21,7 +21,7 @@
       - pve_cluster is defined
       - pve_major_release < 8
 
-  - name: Move machines
+  - name: Enable node maintenance
     inett.pve.node_maintenance:
       enabled: true
     when:
@@ -35,7 +35,7 @@
     - name: Set noout flag
       inett.pve.ceph_flags:
         noout: true
-      when: has_ceph
+      when: pve_ceph_installed
 
     - name: dist-upgrade
       apt:
@@ -58,7 +58,7 @@
     - name: Unset noout flag
       inett.pve.ceph_flags:
         noout: false
-      when: has_ceph
+      when: pve_ceph_installed
 
     - name: Wait for healthy ceph
       inett.pve.ceph_wait_for_health:

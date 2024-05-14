@@ -75,7 +75,7 @@ def wait_for_nodes(module, nodes=None):
                             online_nodes += 1
 
             if (online_nodes == n_nodes) or not in_cluster:
-                return in_cluster
+                return
         except:
             continue
 
@@ -97,9 +97,9 @@ def run_module():
 
     nodes = module.params["nodes"]
 
-    in_cluster = wait_for_nodes(module, nodes)
+    wait_for_nodes(module, nodes)
 
-    module.exit_json(**result, ansible_facts={'in_cluster': in_cluster})
+    module.exit_json(**result)
 
 
 def main():
