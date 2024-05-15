@@ -1,5 +1,5 @@
 - name: get version
-  inett.pve.pve_version_facts:
+  inett.pve.node_facts:
 
 - name: set fact pve_cluster_group
   delegate_to: localhost
