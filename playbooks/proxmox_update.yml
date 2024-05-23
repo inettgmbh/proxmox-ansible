@@ -1,5 +1,5 @@
 ---
-- hosts: pvenodes
+- hosts: pve_nodes
   name: Update cluster
   gather_facts: false
   serial: 1
