@@ -1,7 +1,7 @@
 ---
 - name: gathering vm configuration
   delegate_to: "{{ pve_target_node }}"
-  inett.pve.vm_config_info:
+  inett.pve.vm_get_config:
     vmid: "{{ pve_vmid }}"
   tags: ["always"]
 
