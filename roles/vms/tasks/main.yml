@@ -99,7 +99,7 @@
 
   - name: Cloud-Init
     ansible.builtin.import_role:
-      name: inett.vm_cloudinit
+      name: inett.pve.vm_cloudinit
     tags: cidata
 
   - name: HA-Config
