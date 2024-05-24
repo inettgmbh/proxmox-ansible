@@ -65,7 +65,7 @@
 
   - name: Disks
     import_role:
-      name: inett.vm_disks
+      name: inett.pve.vm_disks
 
   - name: Configure nameserver and search domain
     delegate_to: "{{ pve_target_node }}"
@@ -77,10 +77,6 @@
     when:
       - pve_vm_nameserver is defined
       - pve_vm_searchdomain is defined
-
-  - name: Disks
-    import_role:
-      name: inett.vm_disks
 
   - name: Update CPU
     delegate_to: "{{ pve_target_node }}"
