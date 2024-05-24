@@ -90,6 +90,7 @@ class PveApiModule(AnsibleModule):
         for x in range(16):
             ret.append("virtio%d" % x)
         ret.append("efidisk0")
+        ret.append("tpmstate0")
         return ret
 
     def query_api(
