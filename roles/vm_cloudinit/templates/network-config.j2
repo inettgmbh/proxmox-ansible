@@ -22,5 +22,6 @@ ethernets:
       search: {{ pve_vm_searchdomain | to_json }}
       addresses: {{ pve_vm_nameserver | to_json }}
 {%     endif %}
+{%   endif %}
 {% endfor %}
 
