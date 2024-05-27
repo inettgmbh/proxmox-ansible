@@ -3,6 +3,7 @@
   delegate_to: "{{ pve_target_node }}"
   inett.pve.vm_get_config:
     vmid: "{{ pve_vmid }}"
+  register: _pve_vm_get_config
   tags: ["always"]
 
 - name: resize disks
@@ -14,7 +15,7 @@
     disk: "{{ c_key }}"
     size: "{{ item.value['size'] }}"
   when:
-    - "c_key in pve_vm_config"
+    - "c_key in _pve_vm_get_config.pve_vm_config"
     - "'size' in item.value"
   with_dict: "{{ pve_vm_scsi }}"
   tags: ["always"]
@@ -27,7 +28,7 @@
     vmid: "{{ pve_vmid }}"
     scsi: "{ {{item.key}}: {{item.value}} }"
     storage: "{{ pve_vm_storage }}"
-  when: c_key not in pve_vm_config
+  when: c_key not in _pve_vm_get_config.pve_vm_config
   with_dict: "{{ pve_vm_scsi }}"
   tags: ["always"]
 

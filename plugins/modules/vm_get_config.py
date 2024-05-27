@@ -26,10 +26,10 @@ def run_module():
     )
     vm_config = mod.vm_config_get(mod.params["vmid"])
 
-    mod.exit_json(changed=False, stdout=out, stderr=err, ansible_facts=dict(
+    mod.exit_json(changed=False, stdout=out, stderr=err, 
         pve_vm_config_raw=vm_config_raw,
         pve_vm_config=vm_config,
-    ))
+    )
 
 
 def main():
