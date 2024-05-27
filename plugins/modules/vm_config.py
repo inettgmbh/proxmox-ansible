@@ -28,7 +28,7 @@ def run_module():
     vm, vm_config = mod.vm_config_get(mod.params['vmid'])
 
     old_config = vm_config.copy()
-    old_config.pop('digest')
+    old_config.pop('digest', None)
 
     delete = mod.params.get('update', {}).get('delete', [])
     for d in delete:
@@ -49,7 +49,7 @@ def run_module():
             config=mod.params.get('update', {}),
             vm=vm,
         )
-        new_config.pop('digest')
+        new_config.pop('digest', None)
         mod.exit_json( changed = (old_config != new_config) )
 
     mod.exit_json(
