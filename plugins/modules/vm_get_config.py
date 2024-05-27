@@ -20,8 +20,16 @@ def run_module():
 
     node = mod.vm_locate(mod.params['vmid'])
 
-    _rc, out, err, vm_config = mod.query_json('get', "/nodes/%s/qemu/%s/config" % (node, mod.params['vmid']))
-    mod.exit_json(changed=False, stdout=out, stderr=err, ansible_facts=dict(pve_vm_config=vm_config))
+    _rc, out, err, vm_config_raw = mod.query_json(
+            'get',
+            "/nodes/%s/qemu/%s/config" % (node, mod.params["vmid"])
+    )
+    vm_config = mod.vm_config_get(mod.params["vmid"])
+
+    mod.exit_json(changed=False, stdout=out, stderr=err, ansible_facts=dict(
+        pve_vm_config_raw=vm_config_raw,
+        pve_vm_config=vm_config,
+    ))
 
 
 def main():
