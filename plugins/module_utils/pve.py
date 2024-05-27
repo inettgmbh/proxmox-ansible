@@ -282,7 +282,7 @@ class PveApiModule(AnsibleModule):
                             if len(l_s) == 1 and k == "agent":
                                 n_v.update({"enabled": bool(int(l_s[0]))})
                             elif len(l_s) == 1 and k in self.valid_storages():
-                                n_v.update({"volume": v})
+                                n_v.update({"volume": l_s[0]})
                             elif len(l_s) == 2 and k in self.valid_nets():
                                 if l_s[0] == "firewall":
                                     n_v.update({"firewall": bool(int(l_s[1]))})
