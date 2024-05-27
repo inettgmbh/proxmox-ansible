@@ -271,7 +271,10 @@ class PveApiModule(AnsibleModule):
         )
         for (k, v) in vm_config.items():
             if isinstance(v, str):
-                if '=' in v:
+                if k == "tags":
+                    v_s = v.split(";")
+                    out_config[k] = v_s
+                elif '=' in v:
                     n_v = dict()
                     for l in v.split(','):
                         l_s = l.split('=')
@@ -283,8 +286,6 @@ class PveApiModule(AnsibleModule):
                             elif len(l_s) == 2 and k in self.valid_nets():
                                 if l_s[0] == "firewall":
                                     n_v.update({"firewall": bool(int(l_s[1]))})
-                                elif l_s[0] == "tag":
-                                    n_v.update({"tag": int(l_s[1])})
                                 elif l_s[0] == "trunks":
                                     n_v.update({
                                         "trunks": [int(t) for t in l_s[1].split(";")]
