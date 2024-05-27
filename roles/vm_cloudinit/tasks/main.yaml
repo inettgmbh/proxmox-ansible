@@ -13,7 +13,6 @@
   delegate_to: '{{ pve_target_node }}'
   inett.pve.vm_get_config:
     vmid: '{{ pve_vmid }}'
-  register: _vm_info
   tags:
     - never
     - vm_create
@@ -21,7 +20,7 @@
 - name: save template
   delegate_to: '{{ pve_target_node }}'
   vars:
-    _vm_config: '{{ _vm_info.vm_config }}'
+    _vm_config: '{{ pve_vm_config }}'
   template:
     src: network-config.j2
     dest: /mnt/pve/cephfs/snippets/{{ pve_vmid }}-ci-network-config
