@@ -7,7 +7,7 @@ ethernets:
   {{ net_n }}:
     set-name: "{{ net_n }}"
     match:
-      macaddress: "{{ pve_vm_config[r_net_n]["macaddr"] | lower }}"
+      macaddress: "{{ _pve_vm_current_config.pve_vm_config[r_net_n]["macaddr"] | lower }}"
 {%     if "dhcp" in c and c["dhcp"] %}
     dhcp: true
 {%     else %}
