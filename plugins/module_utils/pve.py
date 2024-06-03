@@ -269,12 +269,12 @@ class PveApiModule(AnsibleModule):
             'get', "/nodes/%s/%s/%s/config" % (vm['node'], vm['type'], vm['vmid']),
             fail="error fetching config for VM %s" % vm['vmid']
         )
-        ret_conf = dict()
+        ret_config = dict()
         for k in vm_config:
             v = vm_config[k]
             if isinstance(v, str):
                 if k == "tags":
-                    ret_conf.update({k: v.split(";")})
+                    ret_config.update({k: v.split(";")})
                 elif '=' in v:
                     n_v = dict()
                     for l in v.split(','):
@@ -307,7 +307,7 @@ class PveApiModule(AnsibleModule):
                             )
                     ret_config.update({k: n_v})
                 elif ',' in v:
-                    ret_config.update(k: v.split(',')})
+                    ret_config.update({k: v.split(',')})
         return vm, ret_config
 
     def vm_config_set(self, f_vmid, node=None, digest=None, config=dict(), vm=None):
