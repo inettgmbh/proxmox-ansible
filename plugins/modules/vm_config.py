@@ -42,11 +42,52 @@ def run_module():
                 change = True
                 break
 
-    if (len(mod.params.get('update', {})) > 0) and change:
+    update_params = mod.params.get('update', {})
+
+    for k, n in update_params.pop('net', {}).items():
+        update_params["net%s" % k] = n
+        if n.get('model', None) is None:
+            update_params["net%s" % k]['model'] = 'virtio'
+        if n.get('tag', None) is not None:
+            update_params["net%s" % k]['tag'] = int(n.get('tag'))
+        if len(n.get('trunks', [])) > 0:
+            update_params["net%s" % k]['trunks'] = n.get('trunks')
+
+        update_params["ipconfig%s" % k] = dict()
+
+        ip4 = n.get('ip', None)
+        net4 = n.get('s_net', None)
+        ip4 = ip4 if net4 is None else "%s/%s" % (ip4, net4)
+        if net4 is not None:
+            update_params["net%s" % k].pop('s_net', None)
+        if ip4 is not None:
+            update_params["net%s" % k].pop('ip', None)
+            update_params["ipconfig%s" % k].update(dict(ip=ip4))
+        gw4 = n.get('gw', None)
+        if gw4 is not None:
+            update_params["net%s" % k].pop('gw', None)
+            update_params["ipconfig%s" % k].update(dict(gw=gw4))
+        ip6 = n.get('ip6', None)
+        net6 = n.get('s_net6', None)
+        ip6 = ip6 if net6 is None else "%s/%s" % (ip6, net6)
+        if net6 is not None:
+            update_params["net%s" % k].pop('s_net6', None)
+        if ip6 is not None:
+            update_params["net%s" % k].pop('ip6', None)
+            update_params["ipconfig%s" % k].update(dict(ip6=ip6))
+        gw6 = n.get('gw6', None)
+        if gw6 is not None:
+            update_params["net%s" % k].pop('gw6', None)
+            update_params["ipconfig%s" % k].update(dict(gw6=gw6))
+
+        if len(update_params["ipconfig%s" % k]) == 0:
+            update_params.pop("ipconfig%s" % k, None)
+
+    if (len(update_params) > 0) and change:
         _vm, new_config = mod.vm_config_set(
             mod.params['vmid'],
             digest=vm_config.get('digest', None),
-            config=mod.params.get('update', {}),
+            config=update_params,
             vm=vm,
         )
         new_config.pop('digest', None)
