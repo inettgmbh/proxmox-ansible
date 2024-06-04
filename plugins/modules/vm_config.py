@@ -4,6 +4,8 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import yaml
+
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 RETURN = r'''
@@ -82,6 +84,24 @@ def run_module():
 
         if len(update_params["ipconfig%s" % k]) == 0:
             update_params.pop("ipconfig%s" % k, None)
+
+    description = update_params.pop('description', None)
+
+    if isinstance(description, dict) and description is not None:
+        for k, v in description.items():
+            if isinstance(v, str):
+                description[k] = v.strip()
+        description = yaml.dump(
+            description,
+            default_flow_style=False,
+        )
+
+    if description is None:
+        description = ""
+    else:
+        description = "\n\n".join(description.split("\n"))
+
+        update_params['description'] = description
 
     if (len(update_params) > 0) and change:
         _vm, new_config = mod.vm_config_set(
