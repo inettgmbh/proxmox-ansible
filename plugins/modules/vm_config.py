@@ -96,11 +96,8 @@ def run_module():
             default_flow_style=False,
         )
 
-    if description is None:
-        description = ""
-    else:
+    if description is not None:
         description = "\n\n".join(description.split("\n"))
-
         update_params['description'] = description
 
     if (len(update_params) > 0) and change:
