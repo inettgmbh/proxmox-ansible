@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2020, inett Gmbh <mhill@inett.de>
 # GNU General Public License v3.0+
