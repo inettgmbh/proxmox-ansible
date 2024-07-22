@@ -5,13 +5,69 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
+
+DOCUMENTATION = '''
+---
+module: vm_description
+short_description: Change Description of a VM or Template
+version_added: "2.9"
+
+description:
+    - "Change Description of a VM or Template"
+    - |
+        If description is a dictionary or list, it will be converted to yaml.
+        If a value of the dict or an element of the list is not a string, said
+        value will be converted to json.
+
+options:
+    vmid:
+        description:
+             - Id of the VM to configure
+        type: int
+        required: true
+    description:
+        description:
+            - Description of VM
+            - May be an string, dictionary or list
+        type: raw
+        required: false
+
+author:
+    - Maximilian Hill <mhill@inett.de>
+'''
+
+EXAMPLES = r'''
+- name: Set VM description
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.vm_description:
+    vmid: "{{ pve_vmid }}"
+    description: "{{ pve_vm_notes }}"
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+message:
+    description: State of subscription after module execution
+    type: dict
+    returned: always
+original_message:
+    description: State of subscription after module execution
+    type: dict
+    returned: always
+'''
+
+
 import yaml
 
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
-RETURN = r'''
-
-'''
 
 
 def run_module():

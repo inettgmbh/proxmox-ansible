@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: proxmox_cluster_membership
+module: pve_cluster
 short_description: Manages the membership of a proxmox node
-version_added: "2.9.9"
+version_added: "0.1"
 
 description:
     - "Let a node join a proxmox cluster"

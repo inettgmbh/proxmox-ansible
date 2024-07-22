@@ -27,6 +27,20 @@ class PveApiModule(AnsibleModule):
 
     @staticmethod
     def _get_cmd(method, url, https_proxy=None, params=dict()):
+        """Builds cli command
+
+        :param method: 'get', 'create' or 'delete'
+        :type method: str
+        :param url: path according to Proxmox VE API
+        :type url: str
+        :param https_proxy: https_proxy environment variable. None by default
+        :type https_proxy: str
+        :param params: Command line arguments (key: name of argument; value: bool, dict, int, list, str)
+        :type params: dict
+        :rtype: list
+        :returns: list of strings to pass to self.run_command()
+        """
+
         ret = list()
         if https_proxy is not None:
             ret.append('https_proxy="' + https_proxy + '"')
@@ -49,6 +63,12 @@ class PveApiModule(AnsibleModule):
 
     @staticmethod
     def params_dict_to_string(in_dict):
+        """Converts dictionary to string
+
+        :param in_dict: dict
+        :rtype: str
+        """
+
         ret_a = list()
 
         for (k, v) in in_dict.items():
@@ -67,6 +87,12 @@ class PveApiModule(AnsibleModule):
 
     @staticmethod
     def valid_nets():
+        """Returns valid config keys for network interfaces
+
+        :rtype: list
+        :returns: valid nic names
+        """
+
         ret = []
         for x in range(32):
             ret.append("net%d" % x)
@@ -74,6 +100,12 @@ class PveApiModule(AnsibleModule):
 
     @staticmethod
     def valid_nic_models():
+        """Returns valid nic models
+
+        :rtype: list
+        :returns: valid nic models
+        """
+
         return [
             "e1000", "e1000-82540em", "e1000-82544gc", "e1000-82545em",
             "e1000e", "i82551", "i82557b", "i82559er", "ne2k_isa", "ne2k_pci",
@@ -82,6 +114,12 @@ class PveApiModule(AnsibleModule):
 
     @staticmethod
     def valid_storages():
+        """Returns valid config keys for storage devices
+
+        :rtype: list
+        :returns: valid config keys for storage devices
+        """
+
         ret = []
         for x in range(4):
             ret.append("ide%d" % x)
@@ -99,6 +137,21 @@ class PveApiModule(AnsibleModule):
             self, method, url,
             access=None, https_proxy=None, fail=None, params=dict()
     ):
+        """Query API and return raw stdout and stderr only
+
+       :param method: Proxmox VE CLI method ('get', 'create' or 'delete')
+       :type method: str
+       :param url: Proxmox VE CLI path
+       :type url: str
+       :param fail: Fail message
+       :type fail: str
+       :param params: Parameters to pass
+       :type params: dict
+
+       :returns: tuple: (int: rc, str: stdout, str: stderr)
+       :rtype: tuple
+       """
+
         if access is None:
             access = self.params['access'].lower()
         if (access != "pvesh") and (https_proxy is not None):
@@ -116,6 +169,21 @@ class PveApiModule(AnsibleModule):
             self, method, url,
             access=None, https_proxy=None, fail=None, params=dict()
     ):
+        """Query API and return raw stdout, raw stderr and parsed json stdout
+
+        :param method: Proxmox VE CLI method ('get', 'create' or 'delete')
+        :type method: str
+        :param url: Proxmox VE CLI path
+        :type url: str
+        :param fail: Fail message
+        :type fail: str
+        :param params: Parameters to pass
+        :type params: dict
+
+        :returns: tuple: (int: rc, str: stdout, str: stderr, Any: object)
+        :rtype: tuple
+        """
+
         rc, out, err = self.query_api(
             method, url,
             access=access, https_proxy=https_proxy, fail=None, params=params
@@ -130,6 +198,12 @@ class PveApiModule(AnsibleModule):
         return rc, out, err, obj
 
     def get_local_node(self):
+        """Return node this module is run on
+
+        :returns: name of the node this module is run on
+        :rtype: str
+        """
+
         rc, out, err, obj = self.query_json("get", "/cluster/status")
         if rc != 0:
             self.fail_json(
@@ -146,6 +220,12 @@ class PveApiModule(AnsibleModule):
         )
 
     def get_nodes(self):
+        """Return list of nodes in Proxmox VE cluster
+
+        :returns: list of nodes n Proxmox VE cluster
+        :rtype: list
+        """
+
         rc, out, err, obj = self.query_json("get", "/nodes")
         if rc != 0:
             self.fail_json(
@@ -158,26 +238,47 @@ class PveApiModule(AnsibleModule):
         return ret
 
     def get_node_lrm_idle(self, node):
+        """Return true if node lrm is idle
+
+        :param node: Name of node
+        :type node: str
+        :returns: true if node lrm is idle
+        :rtype: bool
+        """
+
         rc, _out, _err, obj = self.query_json("get", "/cluster/ha/status/current")
         if rc != 0:
             self.fail_json("Unable to get cluster HA status")
         for e in obj:
             if e["type"] == "lrm" and e["node"] == node:
-                # Proxmox VE doesn't change status to maintenance mode when
-                # lrm is idle, so we MUST BE FINE WITH STATUE "IDLE"
                 return "idle" in e["status"]
 
     def get_node_lrm_maintenance(self, node):
+        """Return true if node lrm is in maintenance mode
+
+        :param node: Name of node
+        :type node: str
+        :returns: true if node lrm is in maintenance mode
+        :rtype: bool
+        """
         rc, _out, _err, obj = self.query_json("get", "/cluster/ha/status/current")
         if rc != 0:
             self.fail_json("Unable to get cluster HA status")
         for e in obj:
             if e["type"] == "lrm" and e["node"] == node:
-                # Proxmox VE doesn't change status to maintenance mode when
-                # lrm is idle, so we MUST BE FINE WITH STATUE "IDLE"
                 return "maintenance mode" in e["status"]
 
     def get_vmids(self, node=None):
+        """Return list of guest VMIDs on given node.
+
+        If no node is given guest VMIDs on all nodes will be returned
+
+        :param node: Name of node
+        :type node: str
+        :return: VMIDs
+        :rtype: set
+        """
+
         ret = list()
         if node is None:
             for node in self.get_nodes():
@@ -203,6 +304,16 @@ class PveApiModule(AnsibleModule):
         return set(ret)
 
     def get_vms(self, node=None):
+        """Return list of guest VMIDs on given node.
+
+        If no node is given guest VMIDs on all nodes will be returned
+
+        :param node: Name of node
+        :type node: str
+        :return: list of guests
+        :rtype: list
+        """
+
         if node is None:
             for node in self.get_nodes():
                 for vm in self.get_vms(node=node):
@@ -228,6 +339,14 @@ class PveApiModule(AnsibleModule):
                     yield vm
 
     def set_node_lrm_maintenance(self, node, enabled):
+        """Set maintenance mode on node
+
+        :param node: Name of node
+        :type node: str
+        :param enabled: target state of node lrm
+        :type enabled: bool
+        """
+
         if enabled:
             action = "enable"
         else:
@@ -242,6 +361,19 @@ class PveApiModule(AnsibleModule):
         r_params = dict(
             vmid=vmid
         )
+        """Returns same as the magic /cluster/nextid
+
+        If a VMID is given and the VMID is already taken, this function will
+        return (true, ${vmid}); if it isn't taken it'll return
+        (false, ${vmid}).
+
+        If no VMID is given, this funtion will return (false, next_free_vmid)
+
+        :param vmid:
+        :return: (if VM already exists, affected VMID)
+        :rtype: tuple
+        """
+
         rc, out, err = self.query_api(
             "get", "/cluster/nextid",
             params=r_params
@@ -252,18 +384,47 @@ class PveApiModule(AnsibleModule):
         return exists, vmid
 
     def vm_info(self, f_vmid, node=None):
+        """Get basic info about a guest
+
+        :param f_vmid: ID of guest information is requested about
+        :type f_vmid: int
+        :param node: node to search. Defaults to all nodes.
+        :type node: str
+        :returns: basic information about guest
+        :rtype: dict
+        """
+
         for vm in self.get_vms(node):
             if int(vm['vmid']) == int(f_vmid):
                 return vm
         self.fail_json(msg="Unable to locate VM")
 
     def vm_locate(self, f_vmid):
+        """Locate VM in cluster
+
+        :param f_vmid: id of guest to locate
+        :type f_vmid: int
+        :returns: Node name the guest is on
+        :rtype: str
+        """
+
         vm = self.vm_info(f_vmid)
         if vm.get('node', None) is not None:
             return vm.get('node')
         self.fail_json(msg="VM %s found but seems to have no node" % f_vmid)
 
     def vm_config_get(self, f_vmid, node=None, vm=None):
+        """Returns fully parsed config
+
+        resolves lists seperated by commas and semicolon as well as
+        dictionaries in which key and value are seperated by '='
+
+        :param f_vmid: id of guest to fetch config of
+        :param node: node on which to look up VMID
+        :param vm:
+        :returna:
+        """
+
         if (node is None) or (vm is None):
             vm = self.vm_info(f_vmid, node=node)
             # node = vm['node']
@@ -313,6 +474,21 @@ class PveApiModule(AnsibleModule):
         return vm, ret_config
 
     def vm_config_set(self, f_vmid, node=None, digest=None, config=dict(), vm=None):
+        """Configure Proxmox VE guest
+
+        :param f_vmid: ID of guest to configure
+        :type f_vmid: int
+        :param node: node to look up guest in. Defaults to all nodes
+        :type node: str
+        :param digest: optional digest of current config
+        :type digest: str
+        :param config: options to set.
+        :type config: dict
+        :param vm: basic vm info
+        :type vm: dict
+        :returns: new configuration
+        :rtype: tuple
+        """
         if (node is None) or (digest is None) or (vm is None):
             vm, vm_config = self.vm_config_get(f_vmid, node)
             digest = vm_config.get('digest', None)

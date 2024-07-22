@@ -5,15 +5,63 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-DOCUMENTATION = r'''
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
 
+DOCUMENTATION = '''
+---
+module: vm_tags
+short_description: Assign tags to a VM
+version_added: "2.9"
+
+description:
+    - "Assign tags to a VM"
+
+options:
+    vmid:
+        description:
+             - Id of the VM to configure
+        type: int
+        required: true
+    tag:
+        description:
+            - Tags to be assigned to VM
+        type: list
+        elements: string
+        required: true
+
+author:
+    - Maximilian Hill <mhill@inett.de>
 '''
 
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+EXAMPLES = r'''
+- name: Set tags of VM
+  vmid: 100
+  tag:
+    - uefi
+    - debian11
+'''
 
 RETURN = r'''
-
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+message:
+    description: New list of tags
+    type: dict
+    returned: always
+original_message:
+    description: Original list of tags
+    type: dict
+    returned: always
 '''
+
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
 def run_module():

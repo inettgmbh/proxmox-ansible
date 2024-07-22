@@ -5,11 +5,6 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import random
-import time
-
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
 ANSIBLE_METADATA = {
     'metadata_version': '0.1',
     'status': ['preview'],
@@ -18,9 +13,9 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: proxmox_migrate
+module: vm_migrate
 short_description: Migrates VMs and LXC container inside cluster
-version_added: "2.9.9"
+version_added: "2.9"
 
 description:
     - "Migrates QEMU VMs and LXC container inside cluster"
@@ -33,12 +28,6 @@ options:
             - Default: true
         required: fase
     migrate_ha:
-        description:
-            - wather or not to migrate vms in HA setup
-            - If set to false, check_ha is set to true
-            - Default true
-        required: true
-    cluster_auth:
         description:
             - wather or not to migrate vms in HA setup
             - If set to false, check_ha is set to true
@@ -66,7 +55,7 @@ options:
             - Default: False
 
 author:
-    - Maximilian Hill (mhill@inett.de)
+    - Maximilian Hill <mhill@inett.de>
 '''
 
 EXAMPELS = '''
@@ -76,6 +65,35 @@ EXAMPELS = '''
     src_node_name: "{{ inventory_hostname }}"
     validate_certs: false
 '''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+message:
+    description: VMs (value) and nodes (value) they're migrated to on
+    type: dict
+    returned: always
+original_message:
+    description: VMs (value) and nodes (value) they're running on
+    type: dict
+    returned: always
+ansible_facts:
+    type: dict
+    returned: always
+    contains:
+        parked_vms:
+            type: dict
+            returned: always
+'''
+
+
+import random
+import time
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+
 
 
 def _pick_target(targets, target_nodes, fallback):

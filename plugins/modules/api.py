@@ -5,30 +5,26 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
 
 DOCUMENTATION = r'''
 ---
-module: pve_api
-
+module: api
 short_description: Access to the pve API
-
-version_added: "0.1.0"
+version_added: "2.9"
 
 options:
-    access:
-        description: |
-            Type of access.
-            options: pvesh | http
-            default: "pvesh"
-        required: False 
     method:
         description: |
             Method of the API call.
             only method "get" is executed, if check_mode is set
             default: "get"
         type: str 
-        required: False
+        required: false
     url:
         type: str
         required: True
@@ -36,6 +32,33 @@ options:
 author:
     - Maximilian Hill <mhill@inett.de>
 '''
+
+EXAMPLES = r'''
+- name: Query API
+  inett.pve.api:
+    url: /cluster/resources
+    mathod: get
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+rc:
+    description: Return code of API command execution
+    type: int
+stdout:
+    description: Stdout of API command execution
+    type: str
+stderr:
+    description: Stderr of API command execution
+    type: str
+parsed_stdout:
+    description: Stderr parsed as JSON
+    type: any
+'''
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
 def run_module():

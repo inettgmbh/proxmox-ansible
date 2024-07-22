@@ -5,6 +5,74 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
+
+DOCUMENTATION = '''
+---
+module: vm_clone
+short_description: Clone VM or Template
+version_added: "2.9"
+
+description:
+    - "Clone VM or Template"
+
+options:
+    vmid:
+        description:
+             - Id of the new VM
+        type: int
+        required: false
+        default: New VMID from API
+    source_vmid:
+        description:
+            - Storage device to configure
+        type: int
+        required: true
+
+author:
+    - Maximilian Hill <mhill@inett.de>
+'''
+
+EXAMPLES = r'''
+- name: Clone VM
+  inett.pve.vm_clone:
+    source_vmid: 100
+    vmid: 101
+  delegate_to: pve01
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+stdout:
+    description: stdout of clone Proxmox VE CLI command
+    type: str
+stderr:
+    description: stderr of clone Proxmox VE CLI command
+    type: str
+stdout_lines:
+    description: stdout of clone Proxmox VE CLI command
+    type: list
+    element: str
+stderr_lines:
+    description: stderr of clone Proxmox VE CLI command
+    type: list
+    element: str
+source_vmid:
+    description: source ID of cloned VM
+    type: int
+target_vmid:
+    description: ID of new VM
+    type: int
+'''
+
+
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 

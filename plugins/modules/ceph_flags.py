@@ -5,8 +5,6 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
 ANSIBLE_METADATA = {
     'metadata_version': '0.1',
     'status': ['preview'],
@@ -15,60 +13,76 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: proxmox_ceph_flags
+module: ceph_flags
 short_description: Sets global ceph flags
-version_added: "2.9.9"
+version_added: "2.9"
 
 description:
     - "Sets global ceph flags"
 
 options:
-    proxmox_cluster_ceph_flags:
-        description:
-            - API node
-        required: true
-    cluster_auth:
-        description:
-            - Authentification information for cluster_node
-        required: true
     nobackfill:
         required: false
+        type: bool
+        default: false
     nodeep-scrub:
         required: false
+        type: bool
+        default: false
     nodown:
         required: false
+        type: bool
+        default: false
     noout:
         required: false
+        type: bool
+        default: false
     norebalance:
         required: false
+        type: bool
+        default: false
     norecover:
         required: false
+        type: bool
+        default: false
     noscrub:
         required: false
+        type: bool
+        default: false
     notieragent:
         required: false
+        type: bool
+        default: false
     noup:
         required: false
+        type: bool
+        default: false
     pause:
         required: false
-    validate_certs:
-        description:
-            - weather to validate ssl certs or not
+        type: bool
+        default: false
 
 author:
-    - Maximilian Hill (mhill@inett.de)
+    - Maximilian Hill <mhill@inett.de>
 '''
 
-EXAMPELS = '''
-- name: Set noout flag
-  delegate_to: localhost
-  throttle: 1
-  proxmox_ceph_wait_for_healthy:
-    cluster_node: "{{ ansible_host }}"
-    cluster_auth: "{{ proxmox_pve_auth }}"
-    validate_certs: false
+EXAMPLES = r'''
+- name: Set flags for Ceph maintenance
+  inett.pve.ceph_flags:
     noout: true
+    noin: true
+    nodown: true
+    noup: true
 '''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+'''
+
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
 def _filter_params(module, data, param_list):

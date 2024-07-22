@@ -5,21 +5,21 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import time
-
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
 ANSIBLE_METADATA = {
     'metadata_version': '0.1',
     'status': ['preview'],
     'supported_by': 'Maximilian Hill'
 }
 
+import time
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+
 DOCUMENTATION = '''
 ---
-module: proxmox_ceph_wait_for_healthy
+module: ceph_wait_for_healthy
 short_description: Waits until ceph health is HEALTH_OK
-version_added: "2.9.9"
+version_added: "2.9"
 
 description:
     - "Waits until ceph health is HEALTH_OK or no ceph is configured"
@@ -28,7 +28,7 @@ description:
 options:
 
 author:
-    - Maximilian Hill (mhill@inett.de)
+    - Maximilian Hill <mhill@inett.de>
 '''
 
 EXAMPELS = '''
@@ -36,6 +36,12 @@ EXAMPELS = '''
   delegate_to: localhost
   throttle: 1
   proxmox_ceph_wait_for_healthy:
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
 '''
 
 

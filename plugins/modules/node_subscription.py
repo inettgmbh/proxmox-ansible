@@ -5,13 +5,103 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
+
+DOCUMENTATION = '''
+---
+module: node_subscription
+short_description: Checks subscription of a node
+version_added: "2.9"
+
+description:
+    - "Checks the subscription key of a Proxmox VE node"
+
+options:
+    state:
+        description:
+            - 'present' if license not be set or removed
+            - 'absent' if license should be set
+        choices: ['absent', 'present']
+        default: 'present'
+        required: false
+    node:
+        description:
+            - Proxmox VE Node maintenance state should be set
+        type: str
+        required: false
+        default: Node the module is run on
+    key:
+        description:
+            - Weather maintenance mode should be enabled 
+        type: str
+        required: false
+        default: false
+    https_proxy:
+        description:
+            - HTTP(S) Proxy to use for license check
+        type: str
+        required: false
+        default: None
+
+author:
+    - Maximilian Hill <mhill@inett.de>
+'''
+
+EXAMPLES= r'''
+- name: Remove key from Proxmox VE node
+  inett.pve.node_subscription:
+    state: absent
+- name: Set key on Proxmox VE node
+  inett.pve.node_subscription:
+    state: present
+    key: pve1b-********
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+message:
+    description: State of subscription after module execution
+    type: dict
+    contains:
+        subscription_present:
+            type: bool
+            returned: always
+        subscription_active:
+            type: bool
+            returned: always
+        valid:
+            type: bool
+            returned: always
+    returned: always
+original_message:
+    description: State of subscription after module execution
+    type: dict
+    contains:
+        subscription_present:
+            type: bool
+            returned: always
+        subscription_active:
+            type: bool
+            returned: always
+        valid:
+            type: bool
+            returned: always
+original_message:
+    description: State of subscription after module execution
+    type: dict
+'''
+
+
 from datetime import datetime
 
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
-RETURN = r'''
-
-'''
 
 
 def __clean_state(in_state=dict()):

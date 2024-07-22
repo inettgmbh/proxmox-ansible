@@ -5,10 +5,6 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import time
-
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
 ANSIBLE_METADATA = {
     'metadata_version': '0.1',
     'status': ['preview'],
@@ -17,9 +13,9 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: proxmox_cluster_wait_for_running_tasks
+module: cluster_wait_for_running_tasks
 short_description: Waits until there is no running task in the cluster
-version_added: "2.9.9"
+version_added: "2.9"
 
 description:
     - "Waits until there is no running task in the cluster"
@@ -27,18 +23,26 @@ description:
 options:
 
 author:
-    - Maximilian Hill (mhill@inett.de)
+    - Maximilian Hill <mhill@inett.de>
 '''
 
-EXAMPELS = '''
+EXAMPLES = r'''
 - name: Wait until there is no running task in the cluster
   delegate_to: localhost
   throttle: 1
-  proxmox_cluster_wait_for_running_tasks:
-    cluster_node: "10.1.99.21"
-    cluster_auth: "{{ hostvars['pve-b-1']['proxmox_pve_auth'] }}"
-    validate_certs: false
+  inett.pve.cluster_await_running_tasks:
 '''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+'''
+
+
+import time
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
 def wait_for_no_running_tasks(module):

@@ -5,21 +5,21 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import time
-
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
-
 ANSIBLE_METADATA = {
     'metadata_version': '0.1',
     'status': ['preview'],
     'supported_by': 'Maximilian Hill'
 }
 
+import time
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+
 DOCUMENTATION = '''
 ---
-module: proxmox_cluster_wait_for_nodes
+module: node_wait_for_complete_cluster
 short_description: Waits for proxmox nodes to be online
-version_added: "2.9.9"
+version_added: "2.9"
 
 description:
     - "Let a node join a proxmox cluster"
@@ -34,9 +34,11 @@ options:
              - nodes to wait for online state
              - Array of node names
              - If value isn't passed, module will wait for all nodes to be online
+        required: false
+        default: All nodes in cluster
 
 author:
-    - Maximilian Hill (mhill@inett.de)
+    - Maximilian Hill <mhill@inett.de>
 '''
 
 EXAMPELS = '''
@@ -45,6 +47,13 @@ EXAMPELS = '''
   throttle: 1
   proxmox_cluster_wait_for_nodes:
     nodes: ['node0', 'node1']
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
 '''
 
 

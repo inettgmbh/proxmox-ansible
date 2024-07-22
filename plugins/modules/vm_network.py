@@ -5,14 +5,72 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
+
+DOCUMENTATION = '''
+---
+module: vm_network
+short_description: Configure VM network
+version_added: "2.9"
+
+description:
+    - "Configure VM network"
+    - "At the moment only adding/changing is possible"
+
+options:
+    vmid:
+        description:
+             - Id of the VM to configure
+        type: int
+        required: true
+    net:
+        description:
+            - Network configuration
+            - Key of dict is the number of the virual NIC
+            - Value is a dict
+        type: dict
+        required: false
+        default: {}
+
+author:
+    - Maximilian Hill <mhill@inett.de>
+'''
+
+EXAMPLES = r'''
+- name: Network
+  delegate_to: "{{ pve_target_node }}"
+  inett.pve.vm_network:
+    vmid: 100
+    net:
+      0: {"bridge": "vmbr1", "firewall": true, "tag": 10, "gw": "172.23.65.254", "s_net": 24, "ip": "172.23.65.163" }
+'''
+
+RETURN = r'''
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+    returned: always
+message:
+    description: Changed network config
+    type: dict
+    returned: always
+original_message:
+    description: Original network config to be changed
+    type: dict
+    returned: always
+'''
+
+
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 import copy
 import sys
 
-RETURN = r'''
 
-'''
 
 
 def run_module():

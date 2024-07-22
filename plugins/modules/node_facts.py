@@ -5,11 +5,80 @@
 # GNU General Public License v3.0+
 # (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
+ANSIBLE_METADATA = {
+    'metadata_version': '0.1',
+    'status': ['preview'],
+    'supported_by': 'Maximilian Hill'
+}
+
+DOCUMENTATION = '''
+---
+module: node_facts
+short_description: Retrieves and sets facts about the Proxmox VE node
+version_added: "2.9"
+
+description:
+    - "Retrieves and sets facts about the Proxmox VE node"
+
+options:
+
+author:
+    - Maximilian Hill <mhill@inett.de>
+'''
+
+EXAMPLES = r'''
+- name: gather fact of Proxmox VE node
+  inett.pve.node_facts:
+    
+'''
 
 RETURN = r'''
-
+changed:
+    description: Returns true if the module execution changed anything
+    type: boolean
+ansible_facts:
+    description: Return code of API command execution
+    type: dict
+    returned: success
+    contains:
+        pve_node_name:
+            type: str
+            returned: success
+        pve_ceph_installed:
+            type: boolean
+            returned: success
+        pve_ceph_health:
+            type: str
+            returned: when supported
+        pve_release:
+            type: str
+            returned: success
+        pve_major_release:
+            type: int
+            returned: success
+        pve_version:
+            type: str
+            returned: success
+        pve_repoid:
+            type: str
+            returned: siccess
+        pve_cluster:
+            type: dict
+            returned: when supported
+        pve_cluster_name:
+            type: str
+            returned: when supported
+        pve_cluster_nodes:
+            type: list
+            returned: when supported
+            elements: str
+        pve_local_node:
+            type: str
+            returned: success
 '''
+
+
+from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
 def run_module():
