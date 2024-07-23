@@ -358,9 +358,6 @@ class PveApiModule(AnsibleModule):
             self.fail_json("failed to set maintenance mode", rc=rc, out=out, err=err, cmd=cmd, s_cmd=s_cmd)
 
     def vmid_magic(self, vmid=None):
-        r_params = dict(
-            vmid=vmid
-        )
         """Returns same as the magic /cluster/nextid
 
         If a VMID is given and the VMID is already taken, this function will
@@ -373,6 +370,10 @@ class PveApiModule(AnsibleModule):
         :return: (if VM already exists, affected VMID)
         :rtype: tuple
         """
+
+        r_params = dict(
+            vmid=vmid
+        )
 
         rc, out, err = self.query_api(
             "get", "/cluster/nextid",
