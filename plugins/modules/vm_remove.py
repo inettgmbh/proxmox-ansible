@@ -61,6 +61,8 @@ stderr:
 '''
 
 
+import time
+
 from ansible_collections.inett.pve.plugins.module_utils.pve import PveApiModule
 
 
@@ -85,12 +87,14 @@ def run_module():
     vm_info = mod.vm_info(mod.params.get("vmid"))
     vm_node = mod.vm_locate(mod.params.get("vmid"))
 
-    if vm_info['status'] != 'stopped':
+    while vm_info['status'] != 'stopped':
         _rc, _out, _err = mod.query_api(
             'create', "/nodes/%s/qemu/%d/status/stop" % (vm_node, mod.params.get('vmid')),
             fail='failed to stop VM'
         )
         changed = True
+        time.sleep(10)
+        vm_info = mod.vm_info(mod.params.get("vmid"))
     _rc, out, err = mod.query_api(
         'delete', "/nodes/%s/qemu/%d" % (vm_node, mod.params.get('vmid')),
         params=dict(purge=True), fail='failed to remove VM'
