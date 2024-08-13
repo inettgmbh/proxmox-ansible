@@ -70,6 +70,7 @@ def run_module():
     )
 
     mod = PveApiModule(argument_spec=arg_spec, supports_check_mode=False)
+    changed = False
 
     vmid = None
     if ('vmid' in mod.params) and (mod.params['vmid'] is not None):
@@ -89,14 +90,15 @@ def run_module():
             'create', "/nodes/%s/qemu/%d/status/stop" % (vm_node, mod.params.get('vmid')),
             fail='failed to stop VM'
         )
-    rc, out, err = mod.query_api(
+        changed = True
+    _rc, out, err = mod.query_api(
         'delete', "/nodes/%s/qemu/%d" % (vm_node, mod.params.get('vmid')),
-        params=dict(purge=True),
+        params=dict(purge=True), fail='failed to remove VM'
     )
+    changed = True
     mod.exit_json(
-        changed=(rc == 0), failed=(rc != 0), stdout=out, stderr=err
+        changed=changed, stdout=out, stderr=err
     )
-
 
 def main():
     run_module()
