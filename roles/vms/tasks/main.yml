@@ -84,6 +84,7 @@
       vmid: "{{ pve_vmid }}"
       update:
         cores: "{{ pve_vm_cores }}"
+        sockets: "{{ pve_vm_sockets }}"
     when: pve_vm_cores is defined
     tags: ["always"]
 
