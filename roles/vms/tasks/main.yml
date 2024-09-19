@@ -101,7 +101,9 @@
   - name: Cloud-Init
     ansible.builtin.import_role:
       name: inett.pve.vm_cloudinit
-    tags: cidata
+    tags:
+      - always
+      - cidata
 
   - name: HA-Config
     delegate_to: "{{ pve_target_node }}"
