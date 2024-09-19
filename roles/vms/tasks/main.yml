@@ -22,7 +22,7 @@
     efivars_storage: "{{ pve_vm_efivars_storage | default(pve_vm_storage) | default('rbd') }}"
     storage: "{{ pve_vm_storage | default('rbd')  }}"
   register: __pve_vm_setup_result
-  retries: 3
+  retries: 10
   delay: 10
   until: __pve_vm_setup_result is not failed
   tags: ["never", "vm_create"]
