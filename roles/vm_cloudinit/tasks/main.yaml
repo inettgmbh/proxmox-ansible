@@ -39,6 +39,7 @@
 
 - name: set up cloud-init drive
   delegate_to: '{{ pve_target_node }}'
+  ignore_errors: true
   inett.pve.vm_config:
     vmid: '{{ pve_vmid }}'
     update:
@@ -46,3 +47,9 @@
   when:
     - pve_vm_state != 'absent'
 
+- name: regenerate cloudinit drive
+  delegate_to: '{{ pve_target_node }}'
+  inett.pve.vm_refresh_cloudinit:
+    vmid: '{{ pve_vmid }}'
+  when:
+    - pve_vm_state != 'absent'
