@@ -17,13 +17,6 @@
   when:
     - pve_vm_state != 'absent'
 
-- name: prepare network configuration
-  ansible_fact:
-    net_prefix: "enp6s"
-    net_offset: 18
-  when:
-    - "net_prefix is not defined or net_offset is not defined"
-
 - name: save template
   delegate_to: '{{ pve_target_node }}'
   vars:
