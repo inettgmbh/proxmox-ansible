@@ -3,7 +3,7 @@ ethernets:
 {% for n, c in pve_vm_net.items() %}
 {%   if "ip" in c and "s_net" in c %}
 {%     set r_net_n = ("net%s" | format(n) ) %}
-{%     set net_n = ("enp6s%s" | format(n+18) ) %}
+{%     set net_n = ("%s%s" | format(net_prefix, n+(net_offset | default (0))) ) %}
   {{ net_n }}:
     set-name: "{{ net_n }}"
     match:
