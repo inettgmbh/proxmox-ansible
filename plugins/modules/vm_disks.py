@@ -106,6 +106,7 @@ def run_module():
             cache=s.get('cache', 'writeback'),
             discard=('on' if s.get('discard', True) else 'ignore'),
             ssd=('on' if s.get('ssd', True) else 'ignore'),
+            iothread=(s.get('iothread'), True),
         )
 
     message = update_params
