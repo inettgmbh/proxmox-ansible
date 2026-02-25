@@ -106,7 +106,6 @@ def run_module():
             cache=s.get('cache', 'writeback'),
             discard=('on' if s.get('discard', True) else 'ignore'),
             ssd=('on' if s.get('ssd', True) else 'ignore'),
-            mbps_rd=600, mbps_wr=300,
         )
 
     message = update_params
